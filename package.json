@@ -1,0 +1,18 @@
+{
+  "name": "mishi-pet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PixiJS desktop pet – Shimeji-style animated companion",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pixi.js": "^6.5.9"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mishi Pet — Test Sandbox</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      overflow: hidden;
+      background: #1e1e2e;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Control panel ─────────────────────────────────── */
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.78);
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 260px;
+      backdrop-filter: blur(6px);
+    }
+
+    #controls h3 {
+      color: #a5b4fc;
+      font-size: 15px;
+      letter-spacing: 0.4px;
+    }
+
+    .control-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* ── Buttons ────────────────────────────────────────── */
+    button {
+      border: none;
+      padding: 7px 13px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    button:hover:not(:disabled) { filter: brightness(1.15); }
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Colour variants */
+    .btn-walk  { background: #6366f1; }
+    .btn-crawl { background: #10b981; }
+    .btn-wall  { background: #f59e0b; }
+    .btn-idle  { background: #ef4444; }
+    .btn-emote { background: #8b5cf6; }
+    .btn-future { background: #475569; }
+    .btn-action { background: #0ea5e9; }
+    .btn-auto {
+      background: #22c55e;
+      width: 100%;
+      font-size: 14px;
+      padding: 9px 13px;
+      letter-spacing: 0.5px;
+    }
+    .btn-auto.active { background: #ef4444; }
+  </style>
+  <script type="module" crossorigin src="/assets/index-auk6lfwu.js"></script>
+</head>
+<body>
+
+  <div id="controls">
+    <h3>🐾 Mishi Pet Tester</h3>
+
+    <!-- Auto-pilot toggle -->
+    <div>
+      <div class="btn-group">
+        <button class="btn-auto" id="btn-auto" data-action="toggle-auto">▶ Auto Pilot</button>
+      </div>
+    </div>
+
+    <!-- Walking -->
+    <div>
+      <div class="control-label">Walk</div>
+      <div class="btn-group">
+        <button class="btn-walk" data-state="walk-left">← Walk Left</button>
+        <button class="btn-walk" data-state="walk-right">Walk Right →</button>
+      </div>
+    </div>
+
+    <!-- Crawl -->
+    <div>
+      <div class="control-label">Crawl</div>
+      <div class="btn-group">
+        <button class="btn-crawl" data-state="crawl-left">← Crawl Left</button>
+        <button class="btn-crawl" data-state="crawl-right">Crawl Right →</button>
+        <button class="btn-crawl" data-state="crawl_top">Ceiling Crawl</button>
+      </div>
+    </div>
+
+    <!-- Wall -->
+    <div>
+      <div class="control-label">Wall</div>
+      <div class="btn-group">
+        <button class="btn-wall" data-state="walk-grab-right">Walk & Grab Right →</button>
+      </div>
+    </div>
+
+    <!-- Emotes -->
+    <div>
+      <div class="control-label">Emotes</div>
+      <div class="btn-group">
+        <button class="btn-emote" data-state="say_hi">Say Hi</button>
+        <button class="btn-emote" data-state="wave">Wave</button>
+        <button class="btn-emote" data-state="summon">Summon</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div>
+      <div class="control-label">Actions</div>
+      <div class="btn-group">
+        <button class="btn-action" data-state="remove_cap">🧢 Remove Cap</button>
+        <button class="btn-action" data-state="tv_clone">📺 TV Clone</button>
+      </div>
+    </div>
+
+    <!-- Idle / Stop -->
+    <div>
+      <div class="control-label">Stop</div>
+      <div class="btn-group">
+        <button class="btn-idle" data-state="sit">Sit / Idle</button>
+      </div>
+    </div>
+
+    <!-- Future states (disabled placeholders) -->
+    <div>
+      <div class="control-label">Coming Soon</div>
+      <div class="btn-group">
+        <button class="btn-future" data-state="sleep" disabled>💤 Sleep</button>
+        <button class="btn-future" data-state="fall"  disabled>⬇ Fall</button>
+        <button class="btn-future" data-state="jump"  disabled>⬆ Jump</button>
+        <button class="btn-future" data-state="run"   disabled>🏃 Run</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+</body>
+</html>

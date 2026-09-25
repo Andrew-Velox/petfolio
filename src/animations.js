@@ -1,0 +1,116 @@
+/**
+ * animations.js — Shimeji frame mappings.
+ *
+ * All 46 frames accounted for. Active mappings are live;
+ * unmapped frames sit in commented placeholders — uncomment
+ * and wire up as you finalise each animation.
+ */
+import * as PIXI from 'pixi.js';
+
+/**
+ * Build an array of PIXI.Textures from a numbered frame list.
+ * @param {string}   dir     Public path prefix, e.g. '/sprites/'
+ * @param {number[]} indices Frame numbers to load
+ * @returns {PIXI.Texture[]}
+ */
+export function frames(dir, indices) {
+  return indices.map((i) => PIXI.Texture.from(`${dir}shime${i}.png`));
+}
+
+/**
+ * Build the full animation dictionary.
+ * @param {string} dir  path prefix for sprites (default '/sprites/')
+ * @returns {Record<string, PIXI.Texture[]>}
+ */
+export function buildAnimations(dir = '/sprites/') {
+  return {
+    // ── Standing / Idle ────────────────────────────────────
+    idle:  frames(dir, [1]),                     // shime1  – neutral stand
+
+    // ── Walking ────────────────────────────────────────────
+    walk:  frames(dir, [1, 2, 3]),               // shime1-3  – walk cycle
+
+    // ── Crawling (ground) ──────────────────────────────────
+    crawl: frames(dir, [20, 21]),                // shime20-21 – belly-crawl
+
+    // ── Wall grab / wall crawl (right wall) ────────────────
+    grab:  frames(dir, [12, 13, 14]),            // shime12-14 – wall-cling cycle
+
+    // ── Sitting / resting ──────────────────────────────────
+    sit:   frames(dir, [31, 32, 33]),            // shime31-33 – sit loop
+
+    // ── Greeting / say-hi ──────────────────────────────────
+    say_hi: frames(dir, [34, 35]),               // shime34-35 – wave hello
+
+    // ── Wave ───────────────────────────────────────────────
+    wave:   frames(dir, [1, 42, 43, 1]),         // wave gesture
+
+    // ── Ceiling crawl ──────────────────────────────────────
+    crawl_top: frames(dir, [23, 24, 25]),        // shime23-25 – ceiling scuttle
+
+    // ── Summon (one-shot entrance animation) ────────────────
+    summon_falling: frames(dir, [4]),                        // shime4 – single drop pose
+    summon_landed:  frames(dir, [18, 19, 1, 42, 43, 1]),     // impact → recover → wave
+
+    // ── Jump ───────────────────────────────────────────────
+    jump: frames(dir, [22]),                     // shime22 – jump arc
+
+    // ── Drag interaction ───────────────────────────────────
+    held:                 frames(dir, [1]),       // neutral held pose
+    heldRightFast:        frames(dir, [9]),       // dragged right – fast
+    heldRightTransition:  frames(dir, [9, 7, 5, 1]),  // ease-out right
+    heldRightStill:       frames(dir, [1]),       // dragged right – still
+    heldLeftFast:         frames(dir, [8]),       // dragged left  – fast
+    heldLeftTransition:   frames(dir, [8, 6, 1]),      // ease-out left
+    heldLeftStill:        frames(dir, [1]),       // dragged left  – still
+
+    // ── Falling / thrown ───────────────────────────────────
+    falling: frames(dir, [4]),                   // shime4  – tumble
+    land:    frames(dir, [18, 19, 1]),           // shime18-19-1 – impact + recover
+
+
+    // ── TV Clone ───────────────────────────────────────────
+    tv_clone: frames(dir, [38, 39, 40, 41, 40, 39, 1]),     // shime38-41 – clone sequence
+
+    // ── Remove Cap ─────────────────────────────────────────
+    remove_cap: frames(dir, [11, 15, 16, 17, 16, 1]),   // shime11,15-17 – cap removal
+
+    // ═══════════════════════════════════════════════════════
+    // UNMAPPED FRAMES — placeholders for future states.
+    // Uncomment & wire up as you finalise each animation.
+    // ═══════════════════════════════════════════════════════
+
+    // ── Jumping ────────────────────────────────────────────
+    // jump_up:   frames(dir, [10, 11]),         // shime10-11 – launch
+    // jump_peak: frames(dir, [4]),              // shime4  – apex / hang
+    // jump_down: frames(dir, [18, 19]),         // shime18-19 – descend
+
+    // ── Sleeping ───────────────────────────────────────────
+    // sleep_transition: frames(dir, [15, 16]),  // shime15-16 – yawn / doze-off
+    // sleep_loop:       frames(dir, [17]),      // shime17 – zzz loop
+
+    // ── Running / dash ─────────────────────────────────────
+    // run: frames(dir, [5, 6, 7]),              // shime5-7 – fast run cycle
+
+    // ── Climbing (left wall) ───────────────────────────────
+    // grab_left: frames(dir, [22, 26, 27]),     // shime22,26,27 – left-wall cling
+
+    // ── Dangling / hanging ─────────────────────────────────
+    // hang: frames(dir, [28, 29, 30]),          // shime28-30 – dangle cycle
+
+    // ── Emotes / reactions ─────────────────────────────────
+    // surprised: frames(dir, [36]),             // shime36 – shock face
+    // happy:     frames(dir, [37]),             // shime37 – smile
+
+    // ── Big actions ────────────────────────────────────────
+    // spin:  frames(dir, [38, 39, 40]),         // shime38-40 – barrel roll
+    // stomp: frames(dir, [41]),                 // shime41 – ground pound
+
+    // ── Misc / unassigned ──────────────────────────────────
+    // misc_42: frames(dir, [42]),               // shime42
+    // misc_43: frames(dir, [43]),               // shime43
+    // misc_44: frames(dir, [44]),               // shime44
+    // misc_45: frames(dir, [45]),               // shime45
+    // misc_46: frames(dir, [46]),               // shime46
+  };
+}
