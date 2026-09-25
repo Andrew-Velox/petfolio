@@ -88,7 +88,7 @@ export function playLanding(self) {
       // If auto-pilot is running, start a fresh chain instead of
       // restoring the (now stale) pre-drag state.
       if (self._autoEnabled) {
-        self._pickNextChain();
+        self._scheduleNextTransition();
       } else {
         self.changeState(self.previousState || 'idle');
       }

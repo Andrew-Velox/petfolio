@@ -23,9 +23,9 @@ import {
   SPRITE_SCALE, WALL_SNAP,
   AUTO_IDLE_MIN_MS, AUTO_IDLE_MAX_MS,
 } from './constants.js';
-import { buildAnimations } from './animations.js';
-import { BEHAVIOR_CHAINS }  from './behaviors.js';
-import { makeBubble }        from './bubble.js';
+import { buildAnimations }     from './animations.js';
+import { STATE_TRANSITIONS }   from './transitions.js';
+import { makeBubble }          from './bubble.js';
 import { initInteraction }   from './interaction.js';
 
 // ── State physics ───────────────────────────────────────────
@@ -35,7 +35,7 @@ import {
   updateCrawlTop, updateSayHi,
   snapToCeiling,
 } from './states/walk.js';
-import { updateWalkGrabRight, updateGrabRight } from './states/wall.js';
+import { updateWalkGrabRight, updateJumpGrabRight, updateGrabRight } from './states/wall.js';
 import { updateDrag, updateFall }               from './states/drag.js';
 import { updateSummon }                         from './states/summon.js';
 
@@ -112,12 +112,14 @@ export class MishiPet {
     this._summonFalling     = false;
     this._summonFallVel     = 0;
     this._summonStage       = null;
+    this._jumpVelX          = 0;      // horizontal speed during jump-to-wall
+    this._jumpVelY          = 0;      // vertical speed during jump-to-wall
 
     // ── Auto-pilot ──────────────────────────────────────────
     this._autoEnabled       = false;
     this._autoTimer         = null;
-    this._autoChain         = null;
-    this._autoStepIdx       = 0;
+    this._lastAutoState     = null;   // avoid repeating same state
+    this._summonUsed        = false;  // summon entrance plays only once
 
     // ── Wire up input & start loop ──────────────────────────
     initInteraction(this);
@@ -154,9 +156,24 @@ export class MishiPet {
       newState = 'idle';
     }
 
-    // Reset orientation for most states
-    if (newState !== 'crawl_top' && newState !== 'grab-right') {
-      if (pet.y < 100) pet.y = window.innerHeight;
+    // If leaving a ceiling/wall state, trigger a gravity fall
+    // (but not when jumping to the wall — that has its own arc)
+    if (newState !== 'crawl_top' && newState !== 'grab-right' && newState !== 'jump-grab-right') {
+      if (pet.y < window.innerHeight - 50) {
+        // Pet is mid-air — drop it with gravity instead of teleporting
+        this._isFalling = true;
+        this._velocityX = 0;
+        this._velocityY = 0;
+        pet.textures       = this.animations.falling;
+        pet.animationSpeed = 0.2;
+        pet.loop           = true;
+        pet.onComplete     = null;
+        pet.play();
+        pet.scale.x = Math.abs(pet.scale.x);
+        pet.scale.y = Math.abs(pet.scale.y);
+        this.state = 'falling';
+        return;  // skip the switch — fall physics will handle the rest
+      }
       pet.scale.x = Math.abs(pet.scale.x);
       pet.scale.y = Math.abs(pet.scale.y);
     }
@@ -182,6 +199,16 @@ export class MishiPet {
         pet.scale.y =  Math.abs(pet.scale.y);
         this._wallCrawlDir = 1;
         break;
+
+      case 'jump-grab-right': {
+        this._applyAnim(anims.jump, { speed: 0.04 });
+        pet.scale.x = -Math.abs(pet.scale.x);  // face right
+        // Calculate arc velocity: reach the wall in ~50 frames
+        const distToWall = (window.innerWidth - WALL_SNAP) - pet.x;
+        this._jumpVelX = Math.max(3, distToWall / 50);
+        this._jumpVelY = -7;  // upward launch impulse
+        break;
+      }
 
       case 'crawl_top':
         this._applyAnim(anims.crawl_top, { speed: 0.12 });
@@ -256,15 +283,13 @@ export class MishiPet {
   startAuto() {
     if (this._autoEnabled) return;
     this._autoEnabled = true;
-    this._pickNextChain();
+    this._scheduleNextTransition();
   }
 
   stopAuto() {
     this._autoEnabled = false;
     clearTimeout(this._autoTimer);
-    this._autoTimer   = null;
-    this._autoChain   = null;
-    this._autoStepIdx = 0;
+    this._autoTimer = null;
     this.changeState('idle');
   }
 
@@ -277,34 +302,42 @@ export class MishiPet {
 
   // ── Auto-pilot internals ────────────────────────────────
 
-  _pickNextChain() {
+  /**
+   * Look up the CURRENT state in the transition table, pick a
+   * random allowed next state (avoiding the last one), transition,
+   * then schedule the next pick.
+   */
+  _scheduleNextTransition() {
     if (!this._autoEnabled) return;
-    let next;
-    do {
-      next = BEHAVIOR_CHAINS[Math.floor(Math.random() * BEHAVIOR_CHAINS.length)];
-    } while (BEHAVIOR_CHAINS.length > 1 && next === this._autoChain);
-    this._autoChain   = next;
-    this._autoStepIdx = 0;
-    this._runAutoStep();
-  }
 
-  _runAutoStep() {
-    if (!this._autoEnabled || !this._autoChain) return;
-    const step = this._autoChain.steps[this._autoStepIdx];
-    if (!step) { this._scheduleNextChain(); return; }
-    this.changeState(step.state);
+    // Look up the current state (may have changed via physics)
+    const entry = STATE_TRANSITIONS[this.state];
+    if (!entry || !entry.next.length) {
+      // Unknown state or dead end — fall back to idle
+      this.changeState('idle');
+      const pause = AUTO_IDLE_MIN_MS
+        + Math.random() * (AUTO_IDLE_MAX_MS - AUTO_IDLE_MIN_MS);
+      this._autoTimer = setTimeout(() => this._scheduleNextTransition(), pause);
+      return;
+    }
+
+    // Filter out the last played state to avoid repeats
+    let candidates = entry.next.filter(s => s !== this._lastAutoState);
+    if (candidates.length === 0) candidates = entry.next;  // only one option
+
+    // Pick randomly
+    const nextState = candidates[Math.floor(Math.random() * candidates.length)];
+    this._lastAutoState = nextState;
+    this.changeState(nextState);
+
+    // Schedule the next transition after this state's duration
+    const nextEntry = STATE_TRANSITIONS[nextState];
+    const duration  = nextEntry?.duration ?? 3000;
+
     this._autoTimer = setTimeout(() => {
       if (!this._autoEnabled) return;
-      this._autoStepIdx++;
-      this._runAutoStep();
-    }, step.duration);
-  }
-
-  _scheduleNextChain() {
-    const pause = AUTO_IDLE_MIN_MS
-      + Math.random() * (AUTO_IDLE_MAX_MS - AUTO_IDLE_MIN_MS);
-    this.changeState('idle');
-    this._autoTimer = setTimeout(() => this._pickNextChain(), pause);
+      this._scheduleNextTransition();
+    }, duration);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -343,6 +376,7 @@ export class MishiPet {
       case 'walk-left':        return updateWalkLeft(this);
       case 'walk-right':       return updateWalkRight(this);
       case 'walk-grab-right':  return updateWalkGrabRight(this);
+      case 'jump-grab-right':  return updateJumpGrabRight(this);
       case 'grab-right':       return updateGrabRight(this);
       case 'crawl-left':       return updateCrawlLeft(this);
       case 'crawl-right':      return updateCrawlRight(this);

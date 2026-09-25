@@ -44,11 +44,14 @@ export const BEHAVIOR_CHAINS = [
     ],
   },
 
-  // ── Wall grab → crawl on wall ─────────────────────────────
+  // ── Walk to wall → grab → crawl ────────────────────────────
+  // walk-grab-right auto-transitions to grab-right via physics
+  // when it reaches the wall, so duration just needs to be long
+  // enough to cross the full screen width.
   {
     name: 'wall-grab',
     steps: [
-      { state: 'walk-grab-right', duration: 4000 },
+      { state: 'walk-grab-right', duration: 8000 },
       { state: 'grab-right',      duration: 5000 },
       { state: 'sit',             duration: 2000 },
     ],
@@ -58,7 +61,28 @@ export const BEHAVIOR_CHAINS = [
   {
     name: 'ceiling-adventure',
     steps: [
-      { state: 'walk-grab-right', duration: 4000 },
+      { state: 'walk-grab-right', duration: 8000 },
+      { state: 'grab-right',      duration: 3000 },
+      { state: 'crawl_top',       duration: 5000 },
+      { state: 'sit',             duration: 2000 },
+    ],
+  },
+
+  // ── Jump to wall → grab → crawl ──────────────────────────
+  {
+    name: 'jump-grab',
+    steps: [
+      { state: 'jump-grab-right', duration: 3000 },
+      { state: 'grab-right',      duration: 5000 },
+      { state: 'sit',             duration: 2000 },
+    ],
+  },
+
+  // ── Jump to wall → ceiling crawl ─────────────────────────
+  {
+    name: 'jump-ceiling',
+    steps: [
+      { state: 'jump-grab-right', duration: 3000 },
       { state: 'grab-right',      duration: 3000 },
       { state: 'crawl_top',       duration: 5000 },
       { state: 'sit',             duration: 2000 },
