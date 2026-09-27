@@ -290,6 +290,7 @@ export class MishiPet {
     this._autoEnabled = false;
     clearTimeout(this._autoTimer);
     this._autoTimer = null;
+    this.sprite.onComplete = null;  // cancel pending one-shot callback
     this.changeState('idle');
   }
 
@@ -330,14 +331,29 @@ export class MishiPet {
     this._lastAutoState = nextState;
     this.changeState(nextState);
 
-    // Schedule the next transition after this state's duration
+    // Schedule next transition based on the target state's type
     const nextEntry = STATE_TRANSITIONS[nextState];
-    const duration  = nextEntry?.duration ?? 3000;
 
-    this._autoTimer = setTimeout(() => {
-      if (!this._autoEnabled) return;
-      this._scheduleNextTransition();
-    }, duration);
+    if (nextEntry?.type === 'once') {
+      // ── ONE-SHOT: wait for animation to finish via onComplete ──
+      const prevOnComplete = this.sprite.onComplete;
+      this.sprite.onComplete = () => {
+        this.sprite.onComplete = null;
+        if (prevOnComplete) prevOnComplete();
+        if (!this._autoEnabled) return;
+        this._scheduleNextTransition();
+      };
+    } else {
+      // ── LOOP: random duration from minMs–maxMs ────────────────
+      const min = nextEntry?.minMs ?? 2000;
+      const max = nextEntry?.maxMs ?? 4000;
+      const duration = min + Math.random() * (max - min);
+
+      this._autoTimer = setTimeout(() => {
+        if (!this._autoEnabled) return;
+        this._scheduleNextTransition();
+      }, duration);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════

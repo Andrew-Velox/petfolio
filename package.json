@@ -1,14 +1,51 @@
 {
   "name": "mishi-pet",
-  "version": "0.1.0",
-  "private": true,
-  "description": "PixiJS desktop pet – Shimeji-style animated companion",
+  "version": "1.0.0",
+  "description": "Drop-in animated desktop pet for any website. Shimeji-style PixiJS companion with auto-pilot, dragging, and 46 animation frames.",
   "type": "module",
+  "main": "dist/mishi-pet.cjs",
+  "module": "dist/mishi-pet.mjs",
+  "browser": "dist/mishi-pet.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/mishi-pet.mjs",
+      "require": "./dist/mishi-pet.cjs",
+      "default": "./dist/mishi-pet.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:lib": "vite build --mode lib",
+    "preview": "vite preview",
+    "inline-sprites": "node scripts/inline-sprites.js",
+    "prepublishOnly": "npm run inline-sprites && npm run build:lib"
   },
+  "keywords": [
+    "desktop-pet",
+    "shimeji",
+    "pixijs",
+    "animated",
+    "widget",
+    "mascot",
+    "companion",
+    "avatar"
+  ],
+  "author": "Andrew-Velox <noreply@Andrew-Velox.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andrew-Velox/mishi_avt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Andrew-Velox/mishi_avt/issues"
+  },
+  "homepage": "https://github.com/Andrew-Velox/mishi_avt#readme",
   "dependencies": {
     "pixi.js": "^6.5.9"
   },

@@ -1,27 +1,69 @@
 /**
- * main.js — Local testing entry-point.
+ * main.js — Entry-point.
  *
- * Instantiates a MishiPet on the page canvas and wires the HTML
- * control-panel buttons to class methods.
+ * Auto-starts the pet with auto-pilot enabled.
+ * Right-click on the avatar opens a context menu for manual control.
  */
 import { MishiPet } from './MishiPet.js';
 
 // ── Bootstrap ─────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
 const mishi  = new MishiPet(canvas);
-
-// Expose to the dev console for quick REPL poking
 window.mishi = mishi;
 
-// ── Button wiring ─────────────────────────────────────────
-// Each button in the HTML carries a `data-state` attribute.
-// We bind a single delegated listener on the controls panel
-// so adding new buttons never requires touching this file.
-const controls = document.getElementById('controls');
+// ── Auto-start ────────────────────────────────────────────
+mishi.startAuto();
+const autoBtn = document.getElementById('btn-auto');
+updateAutoButton(true);
 
-controls.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-state]');
-  if (!btn || btn.disabled) return;
+// ── Context menu ──────────────────────────────────────────
+const menu = document.getElementById('ctx-menu');
+
+// Right-click on the sprite → show context menu at cursor
+mishi.sprite.on('rightclick', (e) => {
+  e.data.originalEvent.preventDefault();
+  showMenu(e.data.originalEvent.clientX, e.data.originalEvent.clientY);
+});
+
+// Also handle standard contextmenu event on the canvas
+// (some browsers/OS send contextmenu instead of rightclick)
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  // Only show if click is near the sprite
+  const pet = mishi.sprite;
+  const dx = Math.abs(e.clientX - pet.x);
+  const dy = Math.abs(e.clientY - pet.y);
+  if (dx < 80 && dy < 120) {
+    showMenu(e.clientX, e.clientY);
+  }
+});
+
+function showMenu(x, y) {
+  // Position the menu, keeping it within the viewport
+  menu.classList.add('visible');
+  const rect = menu.getBoundingClientRect();
+  const maxX = window.innerWidth  - rect.width  - 8;
+  const maxY = window.innerHeight - rect.height - 8;
+  menu.style.left = Math.min(x, maxX) + 'px';
+  menu.style.top  = Math.min(y, maxY) + 'px';
+}
+
+// Click anywhere outside the menu → close it
+document.addEventListener('click', (e) => {
+  if (!menu.contains(e.target)) {
+    menu.classList.remove('visible');
+  }
+});
+
+// Also close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') menu.classList.remove('visible');
+});
+
+// ── Menu item clicks ──────────────────────────────────────
+menu.addEventListener('click', (e) => {
+  const item = e.target.closest('.ctx-item[data-state]');
+  if (!item) return;
 
   // Manual state click stops auto-pilot
   if (mishi.isAuto) {
@@ -29,23 +71,25 @@ controls.addEventListener('click', (e) => {
     updateAutoButton(false);
   }
 
-  mishi.changeState(btn.dataset.state);
+  mishi.changeState(item.dataset.state);
+  menu.classList.remove('visible');
 });
 
 // ── Auto-pilot toggle ─────────────────────────────────────
-const autoBtn = document.getElementById('btn-auto');
-
 autoBtn.addEventListener('click', () => {
   const nowActive = mishi.toggleAuto();
   updateAutoButton(nowActive);
+  menu.classList.remove('visible');
 });
 
 function updateAutoButton(active) {
   if (active) {
-    autoBtn.textContent = '⏹ Stop Auto';
-    autoBtn.classList.add('active');
+    autoBtn.innerHTML = '<span class="icon">⏹</span> Stop Auto';
+    autoBtn.classList.add('auto-on');
+    autoBtn.classList.remove('auto-off');
   } else {
-    autoBtn.textContent = '▶ Auto Pilot';
-    autoBtn.classList.remove('active');
+    autoBtn.innerHTML = '<span class="icon">▶</span> Auto Pilot';
+    autoBtn.classList.add('auto-off');
+    autoBtn.classList.remove('auto-on');
   }
 }
