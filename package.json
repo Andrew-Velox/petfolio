@@ -1,6 +1,6 @@
 {
   "name": "mishi-pet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Drop-in animated desktop pet for any website. Shimeji-style PixiJS companion with auto-pilot, dragging, and 46 animation frames.",
   "type": "module",
   "main": "dist/mishi-pet.cjs",
