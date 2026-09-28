@@ -65,13 +65,16 @@ menu.addEventListener('click', (e) => {
   const item = e.target.closest('.ctx-item[data-state]');
   if (!item) return;
 
-  // Manual state click stops auto-pilot
+  // Stop auto-pilot immediately so the user sees their chosen
+  // state play uninterrupted. The pet will auto-resume after
+  // AUTO_RESUME_DELAY_MS (configured in constants.js).
   if (mishi.isAuto) {
     mishi.stopAuto();
     updateAutoButton(false);
   }
 
-  mishi.changeState(item.dataset.state);
+  // triggerState() handles "play this state, then auto-resume"
+  mishi.triggerState(item.dataset.state);
   menu.classList.remove('visible');
 });
 

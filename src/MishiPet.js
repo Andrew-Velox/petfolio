@@ -21,7 +21,8 @@ import * as PIXI from 'pixi.js';
 // ── Config & data ───────────────────────────────────────────
 import {
   SPRITE_SCALE, WALL_SNAP,
-  AUTO_IDLE_MIN_MS, AUTO_IDLE_MAX_MS,
+  AUTO_IDLE_MIN_MS, AUTO_IDLE_MAX_MS, AUTO_RESUME_DELAY_MS,
+  JUMP_ARC_FRAMES, JUMP_LAUNCH_VEL_Y,
 } from './constants.js';
 import { buildAnimations }     from './animations.js';
 import { STATE_TRANSITIONS }   from './transitions.js';
@@ -103,6 +104,7 @@ export class MishiPet {
     this._lastPointerY      = 0;
     this._prevPointerX      = 0;
     this._prevPointerY      = 0;
+    this._pointerHistory    = [];          // ring buffer of {t, x, y} for throw velocity
     this._dragDirection     = 0;
     this._dragSpeedBucket   = 'slow';
     this._transFrames       = null;
@@ -120,6 +122,7 @@ export class MishiPet {
     this._autoTimer         = null;
     this._lastAutoState     = null;   // avoid repeating same state
     this._summonUsed        = false;  // summon entrance plays only once
+    this._autoResumeTimer   = null;   // timer that re-enables auto after user actions
 
     // ── Wire up input & start loop ──────────────────────────
     initInteraction(this);
@@ -203,10 +206,11 @@ export class MishiPet {
       case 'jump-grab-right': {
         this._applyAnim(anims.jump, { speed: 0.04 });
         pet.scale.x = -Math.abs(pet.scale.x);  // face right
-        // Calculate arc velocity: reach the wall in ~50 frames
+        // Calculate arc velocity: reach the wall in JUMP_ARC_FRAMES frames.
+        // Longer value = slower, more readable arc.
         const distToWall = (window.innerWidth - WALL_SNAP) - pet.x;
-        this._jumpVelX = Math.max(3, distToWall / 50);
-        this._jumpVelY = -7;  // upward launch impulse
+        this._jumpVelX = Math.max(2, distToWall / JUMP_ARC_FRAMES);
+        this._jumpVelY = JUMP_LAUNCH_VEL_Y;  // upward launch impulse
         break;
       }
 
@@ -283,6 +287,8 @@ export class MishiPet {
   startAuto() {
     if (this._autoEnabled) return;
     this._autoEnabled = true;
+    // Any pending "resume auto after delay" timer is now redundant
+    this._cancelAutoResume();
     this._scheduleNextTransition();
   }
 
@@ -290,6 +296,9 @@ export class MishiPet {
     this._autoEnabled = false;
     clearTimeout(this._autoTimer);
     this._autoTimer = null;
+    // User explicitly stopped auto — cancel any auto-resume too,
+    // otherwise the pending timer would re-enable auto after a delay.
+    this._cancelAutoResume();
     this.sprite.onComplete = null;  // cancel pending one-shot callback
     this.changeState('idle');
   }
@@ -300,6 +309,35 @@ export class MishiPet {
   }
 
   get isAuto() { return this._autoEnabled; }
+
+  /**
+   * User-invoked state change (menu button, API call from outside, etc.).
+   * Plays the requested state and then automatically resumes auto-pilot
+   * after AUTO_RESUME_DELAY_MS, even if auto was previously off.
+   *
+   * @param {string} name  State name (same as changeState)
+   */
+  triggerState(name) {
+    this._scheduleAutoResume();
+    this.changeState(name);
+  }
+
+  // ── Auto-resume helpers ─────────────────────────────────
+
+  _scheduleAutoResume() {
+    this._cancelAutoResume();
+    this._autoResumeTimer = setTimeout(() => {
+      this._autoResumeTimer = null;
+      if (!this._autoEnabled) this.startAuto();
+    }, AUTO_RESUME_DELAY_MS);
+  }
+
+  _cancelAutoResume() {
+    if (this._autoResumeTimer !== null) {
+      clearTimeout(this._autoResumeTimer);
+      this._autoResumeTimer = null;
+    }
+  }
 
   // ── Auto-pilot internals ────────────────────────────────
 

@@ -3,6 +3,7 @@
  */
 import {
   GRAVITY, AIR_DRAG, EDGE_MARGIN, TRANSITION_HOLD,
+  AIR_DRAG_Y,
 } from '../constants.js';
 
 // ── Drag (follow cursor) ────────────────────────────────────
@@ -44,6 +45,7 @@ export function updateFall(self) {
   const pet = self.sprite;
 
   self._velocityY += GRAVITY;
+  self._velocityY *= AIR_DRAG_Y;       // terminal-velocity feel on Y
   pet.x += self._velocityX;
   pet.y += self._velocityY;
   self._velocityX *= AIR_DRAG;
@@ -58,7 +60,7 @@ export function updateFall(self) {
     self._velocityX = -Math.abs(self._velocityX) * 0.5;
   }
 
-  // Floor collision
+  // Floor collision — settle directly (no bounce)
   const floor = window.innerHeight;
   if (pet.y >= floor) {
     pet.y = floor;
@@ -85,12 +87,15 @@ export function playLanding(self) {
     pet.onComplete = null;             // clean up
     if (!self._isDragging && !self._isFalling) {
       pet.loop = true;
-      // If auto-pilot is running, start a fresh chain instead of
-      // restoring the (now stale) pre-drag state.
       if (self._autoEnabled) {
+        // Auto-pilot picks a fresh random state — this already
+        // bypasses any stale pre-drag state.
         self._scheduleNextTransition();
       } else {
-        self.changeState(self.previousState || 'idle');
+        // User is in manual control: a drag-throw should never
+        // snap back to wherever the pet was before (e.g. ceiling
+        // crawl). Settle into idle so the pet "lands" naturally.
+        self.changeState('idle');
       }
     }
   };

@@ -6,6 +6,7 @@
  */
 import {
   WALK_SPEED, CRAWL_SPEED, CRAWL_TOP_SPEED, EDGE_MARGIN,
+  CEILING_Y_OFFSET,
 } from '../constants.js';
 
 // ── Walking ─────────────────────────────────────────────────
@@ -39,8 +40,14 @@ export function updateCrawlRight(self) {
 // ── Ceiling crawl ───────────────────────────────────────────
 
 export function snapToCeiling(self) {
-  const srcH = self.animations.crawl_top[0]?.height || 128;
-  self.sprite.y = srcH * Math.abs(self.sprite.scale.y);
+  // Position the sprite so the bottom of the *drawn character* sits at y=0
+  // (touching the ceiling). crawl_top frames have transparent padding below
+  // the character, so the bottom-anchor y-coordinate needs to equal that
+  // padding height (CEILING_Y_OFFSET px) multiplied by the sprite scale.
+  self.sprite.y = Math.max(
+    0,
+    CEILING_Y_OFFSET * Math.abs(self.sprite.scale.y)
+  );
 }
 
 export function updateCrawlTop(self) {
