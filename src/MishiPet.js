@@ -116,6 +116,8 @@ export class MishiPet {
     this._summonStage       = null;
     this._jumpVelX          = 0;      // horizontal speed during jump-to-wall
     this._jumpVelY          = 0;      // vertical speed during jump-to-wall
+    this._crawlFrameIdx     = 0;      // current frame in crawl/crawl_top ping-pong
+    this._crawlHoldFrames   = 0;      // frames remaining before next step advance
 
     // ── Auto-pilot ──────────────────────────────────────────
     this._autoEnabled       = false;
@@ -193,7 +195,13 @@ export class MishiPet {
 
       case 'crawl-left':
       case 'crawl-right':
-        this._applyAnim(anims.crawl, { speed: 0.08 });
+        // Move-pause crawl. updateCrawlLeft/Right split each pose's
+        // duration into a MOVE sub-phase (slide at CRAWL_SPEED) and
+        // a PAUSE sub-phase (hold position), then flip the frame.
+        this._applyAnim(anims.crawl, { speed: 0, loop: false });
+        this._crawlFrameIdx   = 0;
+        this._crawlHoldFrames = 0; // start at frame 0 of the move-pause cycle
+        this.sprite.gotoAndStop(0);
         break;
 
       case 'grab-right':

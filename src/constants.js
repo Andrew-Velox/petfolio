@@ -10,6 +10,21 @@ export const WALK_SPEED           = 2.0;
 export const CRAWL_SPEED          = 0.8;
 export const CRAWL_TOP_SPEED      = 1.0;
 
+// ── Ground crawl (move-pause-move-pause) ──────────────────────
+// One crawl "step" has two phases:
+//   MOVE  — pet slides at CRAWL_SPEED for this many frames
+//   PAUSE — pet holds position for this many frames (pose still up)
+// Then the pose flips to the other frame and the cycle repeats.
+// Tweaking these gives the "crawling creature" feel — momentum +
+// settle, instead of constant sliding.
+export const CRAWL_MOVE_FRAMES     = 28;
+export const CRAWL_PAUSE_FRAMES    = 22;
+// One full step (move + pause + next step's move + next step's pause)
+// lasts (MOVE_FRAMES + PAUSE_FRAMES) * 2 = 100 frames ≈ 1.67s at 60fps
+// Note: ceiling crawl and wall crawl use continuous (non-stepped)
+// motion — see states/walk.js updateCrawlTop and states/wall.js
+// updateGrabRight.
+
 // ── Gravity / air ───────────────────────────────────────────
 export const GRAVITY              = 0.6;   // px / frame²
 export const AIR_DRAG             = 0.94;

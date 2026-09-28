@@ -108,14 +108,14 @@ export const BEHAVIOR_CHAINS = [
   },
 
   // ── Crawl then wave ───────────────────────────────────────
-  {
-    name: 'crawl-and-wave',
-    steps: [
-      { state: 'crawl-right', duration: 2500 },
-      { state: 'wave',        duration: 3000 },
-      { state: 'crawl-left',  duration: 2500 },
-    ],
-  },
+  // {
+  //   name: 'crawl-and-wave',
+  //   steps: [
+  //     { state: 'crawl-right', duration: 2500 },
+  //     { state: 'wave',        duration: 3000 },
+  //     { state: 'crawl-left',  duration: 2500 },
+  //   ],
+  // },
 
   // ── Remove cap → sit ──────────────────────────────────────
   {
