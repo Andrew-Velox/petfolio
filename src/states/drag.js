@@ -3,8 +3,9 @@
  */
 import {
   GRAVITY, AIR_DRAG, EDGE_MARGIN, TRANSITION_HOLD,
-  AIR_DRAG_Y,
+  AIR_DRAG_Y, GRAB_SETTLE_FRAMES,
 } from '../constants.js';
+import { grabAnchorX, grabAnchorXLeft } from './wall.js';
 
 // ── Drag (follow cursor) ────────────────────────────────────
 
@@ -44,19 +45,57 @@ export function updateDrag(self) {
 export function updateFall(self) {
   const pet = self.sprite;
 
+  // ── Grab-settle sub-phase ─────────────────────────────
+  // After a throw into a wall, ease the pet horizontally toward
+  // the grab anchor over GRAB_SETTLE_FRAMES, then transition to
+  // grab-right or grab-left. Skips gravity/velocity for clean
+  // slide motion. We use _grabSettleTarget so the direction is
+  // captured at impact, not recomputed from current state.
+  if (self._grabSettleFrames > 0) {
+    const target = self._grabSettleTarget ?? grabAnchorX(self);
+    pet.x += (target - pet.x) / self._grabSettleFrames;
+    self._grabSettleFrames--;
+    if (self._grabSettleFrames <= 0) {
+      pet.x = target;
+      self._isFalling = false;
+      const nextState = self._grabSettleTarget === grabAnchorXLeft(self) ? 'grab-left' : 'grab-right';
+      self._grabSettleTarget = null;
+      self.changeState(nextState);
+    }
+    return;
+  }
+
   self._velocityY += GRAVITY;
   self._velocityY *= AIR_DRAG_Y;       // terminal-velocity feel on Y
   pet.x += self._velocityX;
   pet.y += self._velocityY;
   self._velocityX *= AIR_DRAG;
 
-  // Clamp to window sides
+  // Clamp to window sides. If the pet is being thrown into a wall
+  // with meaningful horizontal velocity, start the grab-settle
+  // (slow slide into grip) instead of bouncing off.
   if (pet.x < EDGE_MARGIN) {
     pet.x = EDGE_MARGIN;
+    // Thrown into the left wall with intent → settle into grab-left.
+    if (self._velocityX < -1.5 && self.state === 'falling') {
+      self._velocityX = 0;
+      self._velocityY = 0;
+      self._grabSettleTarget  = grabAnchorXLeft(self);
+      self._grabSettleFrames  = GRAB_SETTLE_FRAMES;
+      return;
+    }
     self._velocityX = Math.abs(self._velocityX) * 0.5;
   }
   if (pet.x > window.innerWidth - EDGE_MARGIN) {
     pet.x = window.innerWidth - EDGE_MARGIN;
+    // Thrown into the right wall with intent → settle into grab-right.
+    if (self._velocityX > 1.5 && self.state === 'falling') {
+      self._velocityX = 0;
+      self._velocityY = 0;
+      self._grabSettleTarget  = grabAnchorX(self);
+      self._grabSettleFrames  = GRAB_SETTLE_FRAMES;
+      return;
+    }
     self._velocityX = -Math.abs(self._velocityX) * 0.5;
   }
 
@@ -75,6 +114,14 @@ export function updateFall(self) {
 
 export function playLanding(self) {
   const pet = self.sprite;
+
+  // Reset the sprite cleanly before switching textures. Pixi v6's
+  // AnimatedSprite can get stuck on the previous (single-frame)
+  // falling texture if we just reassign `textures` and call
+  // gotoAndPlay — the internal _currentFrame / _durations state
+  // sometimes isn't fully re-initialised, leaving the old sprite
+  // displayed forever. Stop first, then assign, then play.
+  pet.stop();
   pet.textures       = self.animations.land;
   pet.loop           = false;
   pet.animationSpeed = 0.15;

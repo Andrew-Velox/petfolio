@@ -19,7 +19,7 @@ export const STATE_TRANSITIONS = {
   // ═══════════════════════════════════════════════════════════
 
   idle: {
-    next:  ['walk-right', 'walk-left', 'jump-grab-right', 'sit',
+    next:  ['walk-right', 'walk-left', 'jump-grab-right', 'jump-grab-left', 'sit',
             'say_hi', 'wave', 'tv_clone', 'crawl-right', 'crawl-left'],
     type:  'loop',
     minMs: 3000,
@@ -34,14 +34,14 @@ export const STATE_TRANSITIONS = {
   },
 
   'walk-left': {
-    next:  ['idle', 'sit', 'say_hi', 'wave', 'crawl-left', 'jump-grab-right'],
+    next:  ['idle', 'sit', 'say_hi', 'wave', 'crawl-left', 'jump-grab-left'],
     type:  'loop',
     minMs: 5000,
     maxMs: 9000,
   },
 
   sit: {
-    next:  ['remove_cap', 'idle', 'jump-grab-right'],
+    next:  ['remove_cap', 'idle', 'jump-grab-right', 'jump-grab-left'],
     type:  'loop',
     minMs: 4000,
     maxMs: 8000,
@@ -84,6 +84,13 @@ export const STATE_TRANSITIONS = {
     maxMs: 10000,
   },
 
+  'walk-grab-left': {
+    next:  ['grab-left'],
+    type:  'loop',
+    minMs: 8000,
+    maxMs: 10000,
+  },
+
   'jump-grab-right': {
     next:  ['grab-right'],
     type:  'loop',
@@ -91,7 +98,21 @@ export const STATE_TRANSITIONS = {
     maxMs: 5000,
   },
 
+  'jump-grab-left': {
+    next:  ['grab-left'],
+    type:  'loop',
+    minMs: 3000,
+    maxMs: 5000,
+  },
+
   'grab-right': {
+    next:  ['crawl_top', 'idle'],
+    type:  'loop',
+    minMs: 3000,
+    maxMs: 6000,
+  },
+
+  'grab-left': {
     next:  ['crawl_top', 'idle'],
     type:  'loop',
     minMs: 3000,

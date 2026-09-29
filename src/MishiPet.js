@@ -23,6 +23,9 @@ import {
   SPRITE_SCALE, WALL_SNAP,
   AUTO_IDLE_MIN_MS, AUTO_IDLE_MAX_MS, AUTO_RESUME_DELAY_MS,
   JUMP_ARC_FRAMES, JUMP_LAUNCH_VEL_Y,
+  WALL_CRAWL_MIN_FRAMES, WALL_CRAWL_MAX_FRAMES,
+  CEILING_CRAWL_MIN_FRAMES, CEILING_CRAWL_MAX_FRAMES,
+  CEILING_FALL_CHANCE, CEILING_EDGE_FALL_CHANCE,
 } from './constants.js';
 import { buildAnimations }     from './animations.js';
 import { STATE_TRANSITIONS }   from './transitions.js';
@@ -34,9 +37,9 @@ import {
   updateWalkLeft, updateWalkRight,
   updateCrawlLeft, updateCrawlRight,
   updateCrawlTop, updateSayHi,
-  snapToCeiling,
+  snapToCeiling, freezeCrawlTop,
 } from './states/walk.js';
-import { updateWalkGrabRight, updateJumpGrabRight, updateGrabRight } from './states/wall.js';
+import { updateWalkGrabRight, updateWalkGrabLeft, updateJumpGrabRight, updateJumpGrabLeft, updateGrabRight, updateGrabLeft, freezeGrab } from './states/wall.js';
 import { updateDrag, updateFall }               from './states/drag.js';
 import { updateSummon }                         from './states/summon.js';
 
@@ -118,6 +121,15 @@ export class MishiPet {
     this._jumpVelY          = 0;      // vertical speed during jump-to-wall
     this._crawlFrameIdx     = 0;      // current frame in crawl/crawl_top ping-pong
     this._crawlHoldFrames   = 0;      // frames remaining before next step advance
+    this._grabSettleFrames  = 0;      // frames left in grab-on-throw slide-to-grip
+    this._grabSettleTarget  = null;   // x-coordinate to ease into during grab settle
+    this._wallPhaseFrames   = 0;      // frames remaining in current wall phase (crawl or pause)
+    this._wallPhaseIsCrawl  = true;   // true = crawling, false = paused on the wall
+    this._ceilingPhaseFrames   = 0;   // frames remaining in current ceiling phase (crawl or pause)
+    this._ceilingPhaseIsCrawl  = true; // true = crawling on ceiling, false = paused
+    this._ceilingCrawlDir      = 1;   // +1 = right, -1 = left (current ceiling travel direction)
+    this._lastWallWas          = null; // 'grab-right' | 'grab-left' | null — used to pick the
+                                       // initial facing direction when entering crawl_top
 
     // ── Auto-pilot ──────────────────────────────────────────
     this._autoEnabled       = false;
@@ -163,7 +175,9 @@ export class MishiPet {
 
     // If leaving a ceiling/wall state, trigger a gravity fall
     // (but not when jumping to the wall — that has its own arc)
-    if (newState !== 'crawl_top' && newState !== 'grab-right' && newState !== 'jump-grab-right') {
+    if (newState !== 'crawl_top'
+     && newState !== 'grab-right'  && newState !== 'jump-grab-right'
+     && newState !== 'grab-left'   && newState !== 'jump-grab-left') {
       if (pet.y < window.innerHeight - 50) {
         // Pet is mid-air — drop it with gravity instead of teleporting
         this._isFalling = true;
@@ -190,6 +204,7 @@ export class MishiPet {
       case 'walk-left':
       case 'walk-right':
       case 'walk-grab-right':
+      case 'walk-grab-left':
         this._applyAnim(anims.walk, { speed: 0.18 });
         break;
 
@@ -209,6 +224,16 @@ export class MishiPet {
         pet.scale.x = -Math.abs(pet.scale.x);
         pet.scale.y =  Math.abs(pet.scale.y);
         this._wallCrawlDir = 1;
+        this._startWallPhase(true);
+        break;
+
+      case 'grab-left':
+        this._applyAnim(anims.grab, { speed: 0.1 });
+        // Sprite un-mirrored: hand reaches the left edge of the frame.
+        pet.scale.x =  Math.abs(pet.scale.x);
+        pet.scale.y =  Math.abs(pet.scale.y);
+        this._wallCrawlDir = 1;
+        this._startWallPhase(true);
         break;
 
       case 'jump-grab-right': {
@@ -222,6 +247,15 @@ export class MishiPet {
         break;
       }
 
+      case 'jump-grab-left': {
+        this._applyAnim(anims.jump, { speed: 0.04 });
+        pet.scale.x = Math.abs(pet.scale.x);   // face left
+        const distToWall = pet.x - WALL_SNAP;
+        this._jumpVelX = Math.max(2, distToWall / JUMP_ARC_FRAMES);
+        this._jumpVelY = JUMP_LAUNCH_VEL_Y;
+        break;
+      }
+
       case 'crawl_top':
         this._applyAnim(anims.crawl_top, { speed: 0.12 });
         pet.anchor.set(0.5, 1);
@@ -229,6 +263,14 @@ export class MishiPet {
         pet.rotation = 0;
         pet.scale.x = Math.abs(pet.scale.x);
         pet.scale.y = Math.abs(pet.scale.y);
+        // Crawl into the ceiling from the right wall — face left by default.
+        if (this._lastWallWas === 'grab-right') {
+          pet.scale.x = -Math.abs(pet.scale.x);
+          this._ceilingCrawlDir = -1;
+        } else {
+          this._ceilingCrawlDir = 1;
+        }
+        this._startCeilingPhase(true);
         break;
 
       case 'sit':
@@ -347,7 +389,86 @@ export class MishiPet {
     }
   }
 
+  // ── Wall phase helpers ─────────────────────────────────
+
+  /**
+   * Start a new wall phase (crawl or pause). When the current phase
+   * expires, picks a random next phase and continues. The pet can
+   * also release the wall naturally by hitting the floor or ceiling.
+   *
+   * @param {boolean} isCrawl  true to start crawling, false to pause
+   */
+  _startWallPhase(isCrawl) {
+    this._wallPhaseIsCrawl = isCrawl;
+    const min = isCrawl ? WALL_CRAWL_MIN_FRAMES : WALL_CRAWL_MIN_FRAMES;
+    const max = WALL_CRAWL_MAX_FRAMES;
+    this._wallPhaseFrames = min + Math.floor(Math.random() * (max - min));
+    // During pause phase, freeze the grab sprite so the limbs stop
+    // cycling while the pet is supposed to be holding still.
+    // When transitioning back to crawl, resume the frame loop.
+    if (isCrawl) {
+      this.sprite.gotoAndPlay(0);
+    } else {
+      freezeGrab(this);
+    }
+  }
+
+  // ── Ceiling phase helpers ──────────────────────────────
+
+  /**
+   * Start a new ceiling phase (crawl or pause). When the current phase
+   * expires, picks a random next phase and continues. The pet can also
+   * release the ceiling naturally by hitting an edge (with some chance)
+   * or randomly mid-crawl.
+   *
+   * @param {boolean} isCrawl  true to start crawling, false to pause
+   */
+  _startCeilingPhase(isCrawl) {
+    this._ceilingPhaseIsCrawl = isCrawl;
+    const min = isCrawl ? CEILING_CRAWL_MIN_FRAMES : CEILING_CRAWL_MIN_FRAMES;
+    const max = CEILING_CRAWL_MAX_FRAMES;
+    this._ceilingPhaseFrames = min + Math.floor(Math.random() * (max - min));
+    // During pause phase, freeze the crawl_top sprite so the limbs stop
+    // cycling. Resume the frame loop when crawling again.
+    if (isCrawl) {
+      this.sprite.gotoAndPlay(0);
+    } else {
+      freezeCrawlTop(this);
+    }
+  }
+
   // ── Auto-pilot internals ────────────────────────────────
+
+  /**
+   * True when the pet is on a wall (grab-right/left) but still too
+   * far from the ceiling for the crawl_top animation to look right.
+   * The threshold is the same one used by updateGrabRight/Left to
+   * release the pet to ceiling crawl (y <= 80).
+   */
+  _isFarFromCeiling() {
+    return (this.state === 'grab-right' || this.state === 'grab-left')
+        && this.sprite.y > 80;
+  }
+
+  /**
+   * Force the wall-crawl phase to head upward and extend its duration
+   * so the pet reaches the ceiling before auto-pilot picks crawl_top
+   * again. Used when auto-pilot prematurely picks crawl_top while the
+   * pet is still low on the wall.
+   */
+  _forceWallCrawlUp() {
+    this._wallCrawlDir = -1;  // crawl up
+    this._wallPhaseIsCrawl = true;
+    // Give it a generous crawl duration to actually reach the ceiling.
+    this._wallPhaseFrames = WALL_CRAWL_MAX_FRAMES;
+    // Restart animation playback so the crawl reads as continuous motion.
+    if (this.sprite.textures !== this.animations.grab) {
+      this.sprite.textures = this.animations.grab;
+      this.sprite.loop = true;
+      this.sprite.animationSpeed = 0.1;
+      this.sprite.gotoAndPlay(0);
+    }
+  }
 
   /**
    * Look up the CURRENT state in the transition table, pick a
@@ -373,7 +494,19 @@ export class MishiPet {
     if (candidates.length === 0) candidates = entry.next;  // only one option
 
     // Pick randomly
-    const nextState = candidates[Math.floor(Math.random() * candidates.length)];
+    let nextState = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // Ceiling crawl needs the pet to be near the ceiling. If auto-pilot
+    // picked crawl_top while the pet is still far from the ceiling
+    // (e.g. just after grabbing the wall), force upward crawl and
+    // re-pick. We re-pick so the pet stays on the wall for another
+    // burst before trying the ceiling again.
+    if (nextState === 'crawl_top' && this._isFarFromCeiling()) {
+      this._forceWallCrawlUp();
+      nextState = this.state === 'grab-right' ? 'grab-right' : 'grab-left';
+      this._lastAutoState = null;  // don't filter the re-pick
+    }
+
     this._lastAutoState = nextState;
     this.changeState(nextState);
 
@@ -438,8 +571,11 @@ export class MishiPet {
       case 'walk-left':        return updateWalkLeft(this);
       case 'walk-right':       return updateWalkRight(this);
       case 'walk-grab-right':  return updateWalkGrabRight(this);
+      case 'walk-grab-left':   return updateWalkGrabLeft(this);
       case 'jump-grab-right':  return updateJumpGrabRight(this);
+      case 'jump-grab-left':   return updateJumpGrabLeft(this);
       case 'grab-right':       return updateGrabRight(this);
+      case 'grab-left':        return updateGrabLeft(this);
       case 'crawl-left':       return updateCrawlLeft(this);
       case 'crawl-right':      return updateCrawlRight(this);
       case 'crawl_top':        return updateCrawlTop(this);

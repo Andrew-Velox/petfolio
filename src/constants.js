@@ -64,3 +64,33 @@ export const AIR_DRAG_Y           = 0.985;  // per-frame multiplier on vy (termi
 export const JUMP_ARC_FRAMES      = 100;
 export const JUMP_LAUNCH_VEL_Y    = -5;     // initial upward velocity at launch
                                             // (less negative = lower arc, more negative = higher arc)
+
+// ── Grab-on-throw transition ────────────────────────────────
+// When the pet is thrown into the right wall with enough velocity,
+// instead of an instant snap to grab-right, it eases into the grab
+// position over this many frames. Lower = snappy snap, higher =
+// slow slide-to-grip.
+export const GRAB_SETTLE_FRAMES   = 12;
+
+// ── Wall-crawl cadence ─────────────────────────────────────
+// Once on the wall, the pet alternates between CRAWL (move up/down
+// at WALK_SPEED) and PAUSE (hold still). Each phase lasts for a
+// random duration in this range (frames). Gives the "creature
+// resting on the wall" feel instead of constant bouncing.
+export const WALL_CRAWL_MIN_FRAMES = 40;
+export const WALL_CRAWL_MAX_FRAMES = 140;
+
+// ── Ceiling-crawl cadence ───────────────────────────────────
+// Same idea as the wall: alternate between CRAWL (move left/right at
+// CRAWL_TOP_SPEED) and PAUSE (hold still) on the ceiling. Each phase
+// lasts a random duration in this range (frames).
+export const CEILING_CRAWL_MIN_FRAMES = 50;
+export const CEILING_CRAWL_MAX_FRAMES = 180;
+
+// ── Ceiling fall chance ─────────────────────────────────────
+// While crawling on the ceiling, the pet has a small per-frame chance
+// to release and drop. Higher = more frequent falls. 0 disables falls.
+export const CEILING_FALL_CHANCE     = 0.0015;
+// When the pet reaches the left/right edge of the window while on the
+// ceiling, additional chance to release and drop instead of bouncing.
+export const CEILING_EDGE_FALL_CHANCE = 0.35;

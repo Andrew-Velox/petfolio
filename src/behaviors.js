@@ -57,6 +57,15 @@ export const BEHAVIOR_CHAINS = [
     ],
   },
 
+  {
+    name: 'wall-grab-left',
+    steps: [
+      { state: 'walk-grab-left',  duration: 8000 },
+      { state: 'grab-left',       duration: 5000 },
+      { state: 'sit',             duration: 2000 },
+    ],
+  },
+
   // ── Full ceiling crawl sequence ───────────────────────────
   {
     name: 'ceiling-adventure',
@@ -74,6 +83,15 @@ export const BEHAVIOR_CHAINS = [
     steps: [
       { state: 'jump-grab-right', duration: 3000 },
       { state: 'grab-right',      duration: 5000 },
+      { state: 'sit',             duration: 2000 },
+    ],
+  },
+
+  {
+    name: 'jump-grab-left',
+    steps: [
+      { state: 'jump-grab-left',  duration: 3000 },
+      { state: 'grab-left',       duration: 5000 },
       { state: 'sit',             duration: 2000 },
     ],
   },

@@ -8,6 +8,7 @@ import {
   WALK_SPEED, CRAWL_SPEED, CRAWL_TOP_SPEED, EDGE_MARGIN,
   CEILING_Y_OFFSET,
   CRAWL_MOVE_FRAMES, CRAWL_PAUSE_FRAMES,
+  CEILING_FALL_CHANCE, CEILING_EDGE_FALL_CHANCE,
 } from '../constants.js';
 
 // ── Walking ─────────────────────────────────────────────────
@@ -92,17 +93,77 @@ export function snapToCeiling(self) {
   );
 }
 
+// Freeze the crawl_top sprite on a single static pose. Used when the
+// ceiling-crawling pet enters its PAUSE phase so the limbs don't keep
+// cycling while the pet is meant to be holding still.
+export function freezeCrawlTop(self) {
+  self.sprite.gotoAndStop(0);
+}
+
+// Release the pet from the ceiling and trigger a gravity fall.
+// Mirrors the wall-release pattern: clear crawl state, then drop.
+export function releaseCeiling(self) {
+  self._velocityX = 0;
+  self._velocityY = 0;
+  self._isFalling = false;
+  self._ceilingPhaseFrames = 0;
+  // Falling state plays the falling animation; idle below handles the rest.
+  self.changeState('falling');
+}
+
+// Ceiling crawl — symmetric with wall grab:
+//   1. CRAWL phase: pet moves left/right at CRAWL_TOP_SPEED, bouncing
+//      off edges. Small chance per frame to release and fall.
+//   2. PAUSE phase: pet holds still on the ceiling for a while.
+//   3. RELEASE: when crawling hits an edge, there's a chance to fall
+//      instead of bouncing. Also a small per-frame fall chance so the
+//      pet doesn't stay on the ceiling forever.
 export function updateCrawlTop(self) {
   const pet = self.sprite;
   snapToCeiling(self);
 
-  // Continuous motion (frame cycling is handled by Pixi's animationSpeed)
-  if (pet.scale.x > 0) {
-    pet.x -= CRAWL_TOP_SPEED;
-    if (pet.x < EDGE_MARGIN) pet.scale.x = -Math.abs(pet.scale.x);
-  } else {
-    pet.x += CRAWL_TOP_SPEED;
-    if (pet.x > window.innerWidth - EDGE_MARGIN) pet.scale.x = Math.abs(pet.scale.x);
+  // Tick the current phase
+  if (self._ceilingPhaseFrames > 0) self._ceilingPhaseFrames--;
+
+  if (self._ceilingPhaseIsCrawl) {
+    // Move horizontally in the current crawl direction
+    pet.x += self._ceilingCrawlDir * CRAWL_TOP_SPEED;
+
+    // Random per-frame fall (so the pet can drop mid-crawl)
+    if (Math.random() < CEILING_FALL_CHANCE) {
+      releaseCeiling(self);
+      return;
+    }
+
+    // Hit an edge — bounce or fall
+    const hitLeft  = pet.x < EDGE_MARGIN;
+    const hitRight = pet.x > window.innerWidth - EDGE_MARGIN;
+    if (hitLeft || hitRight) {
+      if (Math.random() < CEILING_EDGE_FALL_CHANCE) {
+        releaseCeiling(self);
+        return;
+      }
+      // Bounce: flip direction
+      pet.x = hitLeft ? EDGE_MARGIN : window.innerWidth - EDGE_MARGIN;
+      self._ceilingCrawlDir *= -1;
+      pet.scale.x = (hitLeft ? -1 : 1) * Math.abs(pet.scale.x);
+    }
+  }
+
+  // Phase expired → pick the next one. 60% chance of pausing after
+  // a crawl, 40% chance of continuing in the same direction. After a
+  // pause there's a 40% chance to reverse direction.
+  if (self._ceilingPhaseFrames <= 0) {
+    if (self._ceilingPhaseIsCrawl) {
+      if (Math.random() < 0.6) {
+        self._startCeilingPhase(false);            // pause
+      } else {
+        self._startCeilingPhase(true);             // keep crawling
+      }
+    } else {
+      if (Math.random() < 0.4) self._ceilingCrawlDir *= -1;
+      self._startCeilingPhase(true);
+    }
   }
 }
 
