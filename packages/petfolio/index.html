@@ -98,6 +98,12 @@
     /* Exit — makes the avatar walk off-screen and peek back in */
     .ctx-item.exit-btn { color: #f87171; }
     .ctx-item.exit-btn:hover { background: rgba(239, 68, 68, 0.15); }
+
+    /* Character submenu items — currently active character is highlighted */
+    .ctx-item.active {
+      background: rgba(99, 102, 241, 0.25);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -164,6 +170,10 @@
     <button class="ctx-item" data-state="tv_clone">
       <span class="icon">📺</span> TV Clone
     </button>
+
+    <div class="ctx-divider"></div>
+    <div class="ctx-label">Character</div>
+    <div id="ctx-character-list"></div>
 
     <div class="ctx-divider"></div>
     <button class="ctx-item stop" data-state="sit">

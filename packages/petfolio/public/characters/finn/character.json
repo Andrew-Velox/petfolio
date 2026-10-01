@@ -1,0 +1,31 @@
+{
+  "name": "finn",
+  "displayName": "Finn",
+  "author": "kypo",
+  "frames": {
+    "_doc": "finn uses the same conventions as an2 (no dedicated wall/ceiling poses). shime13 = best wall pose; shime22 = best ceiling pose.",
+    "idle":     [1],
+    "walk":     [1, 2, 3],
+    "crawl":    [20, 21],
+    "grab":     [13],
+    "sit":      [31, 32, 33],
+    "peek":     [20, 21],
+    "say_hi":   [34, 35],
+    "wave":     [1, 42, 43, 1],
+    "crawlTop": [22],
+    "jump":     [22],
+    "falling":  [4],
+    "land":     [18, 19, 1],
+    "summon_falling": [4],
+    "summon_landed":  [18, 19, 1, 42, 43, 1],
+    "tv_clone":  [38, 39, 40, 41, 40, 39, 1],
+    "remove_cap":[11, 15, 16, 17, 16, 1],
+    "held":      [1],
+    "heldRightFast": [9],
+    "heldRightTransition": [9, 7, 5, 1],
+    "heldRightStill": [1],
+    "heldLeftFast": [8],
+    "heldLeftTransition": [8, 6, 1],
+    "heldLeftStill": [1]
+  }
+}

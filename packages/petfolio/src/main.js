@@ -5,6 +5,7 @@
  * Right-click on the avatar opens a context menu for manual control.
  */
 import { Petfolio } from './Petfolio.js';
+import { CHARACTERS } from './characters/characters.js';
 
 // ── Bootstrap ─────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
@@ -108,4 +109,27 @@ function updateAutoButton(active) {
     autoBtn.classList.add('auto-off');
     autoBtn.classList.remove('auto-on');
   }
+}
+
+// ── Character submenu ──────────────────────────────────────
+// Populate the character list at startup. Each entry calls
+// pet.setCharacter(key) when clicked. The active character is
+// highlighted with the .active class.
+const charList = document.getElementById('ctx-character-list');
+if (charList) {
+  Object.entries(CHARACTERS).forEach(([key, char]) => {
+    const btn = document.createElement('button');
+    btn.className = 'ctx-item';
+    btn.dataset.character = key;
+    btn.innerHTML = `<span class="icon">🐱</span> ${char.displayName}`;
+    if (key === pet.currentCharacter) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      pet.setCharacter(key);
+      // Update active highlight
+      charList.querySelectorAll('.ctx-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      menu.classList.remove('visible');
+    });
+    charList.appendChild(btn);
+  });
 }

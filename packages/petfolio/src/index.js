@@ -13,6 +13,7 @@
 export { Petfolio } from './Petfolio.js';
 
 import { Petfolio as _Petfolio } from './Petfolio.js';
+import { CHARACTERS } from './characters/characters.js';
 
 /**
  * Quick-start: creates a fullscreen transparent canvas, spawns
@@ -21,6 +22,7 @@ import { Petfolio as _Petfolio } from './Petfolio.js';
  * @param {object}  [opts]
  * @param {boolean} [opts.autoStart=true]   Start auto-pilot immediately
  * @param {string}  [opts.spriteDir]        Override sprite directory
+ * @param {string}  [opts.character]        Character key (e.g. 'an2', 'finn')
  * @param {number}  [opts.scale]            Override sprite scale
  * @returns {_Petfolio}
  */
@@ -29,6 +31,7 @@ _Petfolio.summon = function summon(opts = {}) {
     autoStart = true,
     spriteDir,
     scale,
+    character,
   } = opts;
 
   // ── Create a fullscreen transparent canvas ──────────────
@@ -53,6 +56,7 @@ _Petfolio.summon = function summon(opts = {}) {
   // ── Spawn the pet ───────────────────────────────────────
   const petOpts = {};
   if (spriteDir) petOpts.spriteDir = spriteDir;
+  if (character) petOpts.character = character;
 
   const pet = new _Petfolio(canvas, petOpts);
 
@@ -65,4 +69,12 @@ _Petfolio.summon = function summon(opts = {}) {
   }
 
   return pet;
+};
+
+/**
+ * List all registered character keys.
+ * @returns {string[]}
+ */
+_Petfolio.availableCharacters = function () {
+  return Object.keys(CHARACTERS);
 };

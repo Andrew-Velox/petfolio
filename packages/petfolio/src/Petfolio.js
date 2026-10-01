@@ -32,6 +32,7 @@ import { buildAnimations }     from './animations.js';
 import { STATE_TRANSITIONS }   from './transitions.js';
 import { makeBubble }          from './bubble.js';
 import { initInteraction }   from './interaction.js';
+import { CHARACTERS, DEFAULT_CHARACTER } from './characters/characters.js';
 
 // ── State physics ───────────────────────────────────────────
 import {
@@ -52,10 +53,12 @@ export class Petfolio {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {object}            [opts]
-   * @param {string}            [opts.spriteDir='/sprites/']
+   * @param {string}            [opts.spriteDir='/sprites/']  Dev-mode sprite path
+   * @param {string}            [opts.character]             Character key (default: first registered)
    */
   constructor(canvas, opts = {}) {
     const spriteDir = opts.spriteDir ?? '/sprites/';
+    const initialChar = opts.character ?? DEFAULT_CHARACTER;
 
     // ── Pixi bootstrap ──────────────────────────────────────
     PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -66,8 +69,20 @@ export class Petfolio {
       transparent: true,
     });
 
+    // ── Character ───────────────────────────────────────────
+    if (!CHARACTERS[initialChar]) {
+      throw new Error(`Petfolio: unknown character "${initialChar}". ` +
+        `Available: ${Object.keys(CHARACTERS).join(', ')}`);
+    }
+    this._currentCharacter = initialChar;
+    this._spriteDir        = spriteDir;
+
     // ── Animations ──────────────────────────────────────────
-    this.animations = buildAnimations(spriteDir);
+    this.animations = buildAnimations(
+      spriteDir,
+      CHARACTERS[initialChar].spriteData,
+      CHARACTERS[initialChar].frames,
+    );
 
     // ── Animated sprite ─────────────────────────────────────
     this.sprite = new PIXI.AnimatedSprite(this.animations.idle);
@@ -497,6 +512,63 @@ export class Petfolio {
   triggerState(name) {
     this._scheduleAutoResume();
     this.changeState(name);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PUBLIC API — Character switching
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Currently active character key (folder name).
+   */
+  get currentCharacter() { return this._currentCharacter; }
+
+  /**
+   * List all registered character keys.
+   */
+  get availableCharacters() { return Object.keys(CHARACTERS); }
+
+  /**
+   * Switch to a different character at runtime. Rebuilds all
+   * animations from the new character's sprite data and refreshes
+   * the current state's textures so the new character appears
+   * immediately (without waiting for the next state change).
+   *
+   * Safe to call from any state (dragging, falling, mid-animation).
+   * No-op if the character is already active.
+   *
+   * @param {string} name  Character key (folder name, e.g. 'shime', 'an2')
+   */
+  setCharacter(name) {
+    if (name === this._currentCharacter) return;
+    if (!CHARACTERS[name]) {
+      throw new Error(`Petfolio: unknown character "${name}". ` +
+        `Available: ${Object.keys(CHARACTERS).join(', ')}`);
+    }
+
+    // Cancel in-flight interaction so the sprite is cleanly ours
+    if (this._isDragging || this._isFalling) {
+      this._isDragging = false;
+      this._isFalling  = false;
+      this._velocityX  = 0;
+      this._velocityY  = 0;
+    }
+    this._summonFalling = false;
+    this._summonFallVel = 0;
+    this._summonStage   = null;
+    this.sprite.onComplete = null;
+
+    this._currentCharacter = name;
+    this.animations = buildAnimations(
+      this._spriteDir,
+      CHARACTERS[name].spriteData,
+      CHARACTERS[name].frames,
+    );
+
+    // Re-apply current state's textures from the new animation set.
+    // changeState handles the 'idle' fallback when the new character
+    // doesn't have all the same animation keys.
+    this.changeState(this.state);
   }
 
   // ── Auto-resume helpers ─────────────────────────────────
