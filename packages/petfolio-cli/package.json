@@ -1,0 +1,46 @@
+{
+  "name": "petfolio-cli",
+  "version": "1.0.0",
+  "description": "CLI for Petfolio — scans your project and generates a knowledge base JSON for the AI assistant.",
+  "type": "module",
+  "main": "bin/index.js",
+  "bin": {
+    "petfolio-cli": "bin/index.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node bin/index.js"
+  },
+  "keywords": [
+    "petfolio",
+    "cli",
+    "knowledge-base",
+    "ai",
+    "scanner"
+  ],
+  "author": "Andrew-Velox <noreply@Andrew-Velox.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andrew-Velox/petfolio.git",
+    "directory": "packages/petfolio-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Andrew-Velox/petfolio/issues"
+  },
+  "homepage": "https://github.com/Andrew-Velox/petfolio#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.0.6",
+    "@babel/traverse": "^8.0.6",
+    "dotenv": "^18.0.5",
+    "glob": "^13.0.6",
+    "inquirer": "^14.2.2"
+  }
+}
