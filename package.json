@@ -1,16 +1,16 @@
 {
-  "name": "mishi-pet",
+  "name": "petfolio",
   "version": "1.0.1",
   "description": "Drop-in animated desktop pet for any website. Shimeji-style PixiJS companion with auto-pilot, dragging, and 46 animation frames.",
   "type": "module",
-  "main": "dist/mishi-pet.cjs",
-  "module": "dist/mishi-pet.mjs",
-  "browser": "dist/mishi-pet.mjs",
+  "main": "dist/petfolio.cjs",
+  "module": "dist/petfolio.mjs",
+  "browser": "dist/petfolio.mjs",
   "exports": {
     ".": {
-      "import": "./dist/mishi-pet.mjs",
-      "require": "./dist/mishi-pet.cjs",
-      "default": "./dist/mishi-pet.mjs"
+      "import": "./dist/petfolio.mjs",
+      "require": "./dist/petfolio.cjs",
+      "default": "./dist/petfolio.mjs"
     }
   },
   "files": [
@@ -34,18 +34,19 @@
     "widget",
     "mascot",
     "companion",
-    "avatar"
+    "avatar",
+    "petfolio"
   ],
   "author": "Andrew-Velox <noreply@Andrew-Velox.dev>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Andrew-Velox/mishi_avt.git"
+    "url": "git+https://github.com/Andrew-Velox/petfolio.git"
   },
   "bugs": {
-    "url": "https://github.com/Andrew-Velox/mishi_avt/issues"
+    "url": "https://github.com/Andrew-Velox/petfolio/issues"
   },
-  "homepage": "https://github.com/Andrew-Velox/mishi_avt#readme",
+  "homepage": "https://github.com/Andrew-Velox/petfolio#readme",
   "dependencies": {
     "pixi.js": "^6.5.9"
   },

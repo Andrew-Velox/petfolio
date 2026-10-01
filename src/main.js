@@ -4,15 +4,15 @@
  * Auto-starts the pet with auto-pilot enabled.
  * Right-click on the avatar opens a context menu for manual control.
  */
-import { MishiPet } from './MishiPet.js';
+import { Petfolio } from './Petfolio.js';
 
 // ── Bootstrap ─────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
-const mishi  = new MishiPet(canvas);
-window.mishi = mishi;
+const pet    = new Petfolio(canvas);
+window.pet = pet;
 
 // ── Auto-start ────────────────────────────────────────────
-mishi.startAuto();
+pet.startAuto();
 const autoBtn = document.getElementById('btn-auto');
 updateAutoButton(true);
 
@@ -20,7 +20,7 @@ updateAutoButton(true);
 const menu = document.getElementById('ctx-menu');
 
 // Right-click on the sprite → show context menu at cursor
-mishi.sprite.on('rightclick', (e) => {
+pet.sprite.on('rightclick', (e) => {
   e.data.originalEvent.preventDefault();
   showMenu(e.data.originalEvent.clientX, e.data.originalEvent.clientY);
 });
@@ -30,9 +30,9 @@ mishi.sprite.on('rightclick', (e) => {
 canvas.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   // Only show if click is near the sprite
-  const pet = mishi.sprite;
-  const dx = Math.abs(e.clientX - pet.x);
-  const dy = Math.abs(e.clientY - pet.y);
+  const sprite = pet.sprite;
+  const dx = Math.abs(e.clientX - sprite.x);
+  const dy = Math.abs(e.clientY - sprite.y);
   if (dx < 80 && dy < 120) {
     showMenu(e.clientX, e.clientY);
   }
@@ -68,19 +68,19 @@ menu.addEventListener('click', (e) => {
   // Stop auto-pilot immediately so the user sees their chosen
   // state play uninterrupted. The pet will auto-resume after
   // AUTO_RESUME_DELAY_MS (configured in constants.js).
-  if (mishi.isAuto) {
-    mishi.stopAuto();
+  if (pet.isAuto) {
+    pet.stopAuto();
     updateAutoButton(false);
   }
 
   // triggerState() handles "play this state, then auto-resume"
-  mishi.triggerState(item.dataset.state);
+  pet.triggerState(item.dataset.state);
   menu.classList.remove('visible');
 });
 
 // ── Auto-pilot toggle ─────────────────────────────────────
 autoBtn.addEventListener('click', () => {
-  const nowActive = mishi.toggleAuto();
+  const nowActive = pet.toggleAuto();
   updateAutoButton(nowActive);
   menu.classList.remove('visible');
 });

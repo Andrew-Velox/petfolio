@@ -1,5 +1,5 @@
 /**
- * MishiPet.js — Slim orchestrator class.
+ * Petfolio.js — Slim orchestrator class.
  *
  * All heavy logic lives in dedicated modules:
  *   constants.js   — tuning values
@@ -13,8 +13,8 @@
  *   states/summon.js — summon drop physics
  *
  * Usage:
- *   import { MishiPet } from './MishiPet.js';
- *   const pet = new MishiPet(document.getElementById('canvas'));
+ *   import { Petfolio } from './Petfolio.js';
+ *   const pet = new Petfolio(document.getElementById('canvas'));
  */
 import * as PIXI from 'pixi.js';
 
@@ -44,9 +44,9 @@ import { updateDrag, updateFall }               from './states/drag.js';
 import { updateSummon }                         from './states/summon.js';
 
 // ─────────────────────────────────────────────────────────────
-// MishiPet class
+// Petfolio class
 // ─────────────────────────────────────────────────────────────
-export class MishiPet {
+export class Petfolio {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {object}            [opts]

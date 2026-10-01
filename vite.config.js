@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
       emptyDir: true,
       lib: {
         entry: 'src/index.js',
-        name: 'MishiPet',
-        fileName: (format) => `mishi-pet.${format === 'es' ? 'mjs' : 'cjs'}`,
+        name: 'Petfolio',
+        fileName: (format) => `petfolio.${format === 'es' ? 'mjs' : 'cjs'}`,
         formats: ['es', 'cjs'],
       },
       rollupOptions: {

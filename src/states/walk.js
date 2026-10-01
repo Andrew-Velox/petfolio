@@ -1,7 +1,7 @@
 /**
  * states/walk.js — Walk, crawl, ceiling-crawl, and say-hi physics.
  *
- * Each function receives the MishiPet instance (`self`) so it can
+ * Each function receives the Petfolio instance (`self`) so it can
  * read/write sprite position, scale, and call changeState().
  */
 import {

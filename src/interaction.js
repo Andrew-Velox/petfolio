@@ -2,7 +2,7 @@
  * interaction.js — Pointer drag / throw wiring.
  *
  * Sets up pointerdown, pointermove, pointerup on the sprite and stage.
- * All handlers close over the MishiPet instance (`self`).
+ * All handlers close over the Petfolio instance (`self`).
  */
 import * as PIXI from 'pixi.js';
 import {

@@ -1,30 +1,30 @@
-# 🐾 Mishi Pet
+# 🐾 Petfolio
 
 Drop-in animated desktop pet for any website. A Shimeji-style PixiJS companion that walks, crawls, jumps, waves, and responds to dragging — all with zero configuration.
 
-![Mishi Pet](https://img.shields.io/npm/v/mishi-pet?color=6366f1&label=npm) ![Bundle](https://img.shields.io/bundlephobia/minzip/mishi-pet?color=10b981)
+![Petfolio](https://img.shields.io/npm/v/petfolio?color=6366f1&label=npm) ![Bundle](https://img.shields.io/bundlephobia/minzip/petfolio?color=10b981)
 
 ## Quick Start
 
 ### NPM
 
 ```bash
-npm install mishi-pet
+npm install petfolio
 ```
 
 ```js
-import { MishiPet } from 'mishi-pet';
+import { Petfolio } from 'petfolio';
 
 // One line — creates a fullscreen overlay with the pet
-const pet = MishiPet.summon();
+const pet = Petfolio.summon();
 ```
 
 ### CDN (Script Tag)
 
 ```html
-<script src="https://unpkg.com/mishi-pet"></script>
+<script src="https://unpkg.com/petfolio"></script>
 <script>
-  const pet = MishiPet.summon();
+  const pet = Petfolio.summon();
 </script>
 ```
 
@@ -33,7 +33,7 @@ That's it! The pet appears on your page and starts playing random animations.
 ## Options
 
 ```js
-const pet = MishiPet.summon({
+const pet = Petfolio.summon({
   autoStart: true,    // Start auto-pilot immediately (default: true)
   scale: 0.95,        // Sprite scale (default: 0.95)
 });
@@ -105,8 +105,8 @@ npm run inline-sprites
 
 ```
 src/
-├── index.js          ← NPM entry-point (MishiPet.summon())
-├── MishiPet.js       ← Main class (state machine, auto-pilot)
+├── index.js          ← NPM entry-point (Petfolio.summon())
+├── Petfolio.js       ← Main class (state machine, auto-pilot)
 ├── constants.js      ← Physics & timing constants
 ├── animations.js     ← Frame mappings (46 sprites)
 ├── transitions.js    ← Auto-pilot state transition table
