@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Petfolio</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      overflow: hidden;
+      background: #1e1e2e;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Context menu (hidden by default) ──────────────── */
+    #ctx-menu {
+      position: fixed;
+      z-index: 100;
+      display: none;
+      background: rgba(15, 15, 25, 0.92);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 10px;
+      padding: 8px 0;
+      min-width: 180px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+      user-select: none;
+    }
+    #ctx-menu.visible { display: block; }
+
+    /* ── Menu header ──────────────────────────────────── */
+    .ctx-header {
+      padding: 6px 14px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #a5b4fc;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 4px;
+    }
+
+    /* ── Divider / section labels ─────────────────────── */
+    .ctx-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 4px 0;
+    }
+    .ctx-label {
+      padding: 4px 14px 2px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #555;
+    }
+
+    /* ── Menu items ───────────────────────────────────── */
+    .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 7px 14px;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.1s;
+    }
+    .ctx-item:hover {
+      background: rgba(99, 102, 241, 0.2);
+      color: #fff;
+    }
+    .ctx-item .icon {
+      width: 18px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* Auto-pilot toggle styling */
+    .ctx-item.auto-on  { color: #22c55e; }
+    .ctx-item.auto-off { color: #ef4444; }
+
+    /* Stop / idle */
+    .ctx-item.stop { color: #f87171; }
+    .ctx-item.stop:hover { background: rgba(239, 68, 68, 0.15); }
+
+    /* Exit — makes the avatar walk off-screen and peek back in */
+    .ctx-item.exit-btn { color: #f87171; }
+    .ctx-item.exit-btn:hover { background: rgba(239, 68, 68, 0.15); }
+  </style>
+  <script type="module" crossorigin src="/assets/index-lbP_q5J0.js"></script>
+</head>
+<body>
+
+  <!-- Right-click context menu -->
+  <div id="ctx-menu">
+    <div class="ctx-header">🐾 Petfolio</div>
+
+    <!-- Auto-pilot -->
+    <button class="ctx-item" id="btn-auto">
+      <span class="icon">▶</span> Auto Pilot
+    </button>
+
+    <div class="ctx-divider"></div>
+    <div class="ctx-label">Movement</div>
+    <button class="ctx-item" data-state="walk-left">
+      <span class="icon">←</span> Walk Left
+    </button>
+    <button class="ctx-item" data-state="walk-right">
+      <span class="icon">→</span> Walk Right
+    </button>
+    <button class="ctx-item" data-state="crawl-left">
+      <span class="icon">🐛</span> Crawl Left
+    </button>
+    <button class="ctx-item" data-state="crawl-right">
+      <span class="icon">🐛</span> Crawl Right
+    </button>
+    <button class="ctx-item" data-state="crawl_top">
+      <span class="icon">🔝</span> Ceiling Crawl
+    </button>
+
+    <div class="ctx-divider"></div>
+    <div class="ctx-label">Wall</div>
+    <button class="ctx-item" data-state="walk-grab-right">
+      <span class="icon">🧱</span> Walk & Grab →
+    </button>
+    <button class="ctx-item" data-state="jump-grab-right">
+      <span class="icon">⬆</span> Jump & Grab →
+    </button>
+    <button class="ctx-item" data-state="walk-grab-left">
+      <span class="icon">🧱</span> ← Walk & Grab
+    </button>
+    <button class="ctx-item" data-state="jump-grab-left">
+      <span class="icon">⬆</span> ← Jump & Grab
+    </button>
+
+    <div class="ctx-divider"></div>
+    <div class="ctx-label">Emotes</div>
+    <button class="ctx-item" data-state="say_hi">
+      <span class="icon">👋</span> Say Hi
+    </button>
+    <button class="ctx-item" data-state="wave">
+      <span class="icon">✋</span> Wave
+    </button>
+    <button class="ctx-item" data-state="summon">
+      <span class="icon">⭐</span> Summon
+    </button>
+
+    <div class="ctx-divider"></div>
+    <div class="ctx-label">Actions</div>
+    <button class="ctx-item" data-state="remove_cap">
+      <span class="icon">🧢</span> Remove Cap
+    </button>
+    <button class="ctx-item" data-state="tv_clone">
+      <span class="icon">📺</span> TV Clone
+    </button>
+
+    <div class="ctx-divider"></div>
+    <button class="ctx-item stop" data-state="sit">
+      <span class="icon">⏹</span> Sit / Stop
+    </button>
+    <button class="ctx-item exit-btn" id="btn-exit">
+      <span class="icon">🚪</span> Exit
+    </button>
+  </div>
+
+  <canvas id="canvas"></canvas>
+</body>
+</html>

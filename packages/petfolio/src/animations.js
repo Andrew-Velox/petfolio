@@ -47,6 +47,12 @@ export function buildAnimations(dir = '/sprites/') {
     // ── Sitting / resting ──────────────────────────────────
     sit:   frames(dir, [31, 32, 33]),            // shime31-33 – sit loop
 
+    // ── Peek (looping animation shown after avatar walks off-screen) ─
+    // Used by walk-off-{left,right} → peek-{left,right} transitions.
+    // Two-frame loop so the avatar reads as "peeking back in" with a
+    // little idle motion rather than frozen.
+    peek:  frames(dir, [20, 21]),                     // shime20-21 – looping peek
+
     // ── Greeting / say-hi ──────────────────────────────────
     say_hi: frames(dir, [34, 35]),               // shime34-35 – wave hello
 

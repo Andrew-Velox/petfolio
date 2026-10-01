@@ -9,6 +9,7 @@ import {
   CEILING_Y_OFFSET,
   CRAWL_MOVE_FRAMES, CRAWL_PAUSE_FRAMES,
   CEILING_FALL_CHANCE, CEILING_EDGE_FALL_CHANCE,
+  EXIT_OFFSCREEN_OFFSET,
 } from '../constants.js';
 
 // ── Walking ─────────────────────────────────────────────────
@@ -78,6 +79,29 @@ export function updateCrawlRight(self) {
   }
 
   if (pet.x > window.innerWidth - EDGE_MARGIN) self.changeState('crawl-left');
+}
+
+// ── Walk off-screen (Exit animation) ─────────────────────────
+//
+// Triggered by pet.exitToPeek() in Petfolio.js. The avatar walks
+// straight off the chosen side, then once it has cleared the
+// viewport edge by EXIT_OFFSCREEN_OFFSET px, transitions to the
+// matching peek-{side} state where it freezes.
+
+export function updateWalkOffLeft(self) {
+  self.sprite.scale.x =  Math.abs(self.sprite.scale.x); // face left
+  self.sprite.x -= WALK_SPEED;
+  if (self.sprite.x < -EXIT_OFFSCREEN_OFFSET) {
+    self.changeState('peek-left');
+  }
+}
+
+export function updateWalkOffRight(self) {
+  self.sprite.scale.x = -Math.abs(self.sprite.scale.x); // face right
+  self.sprite.x += WALK_SPEED;
+  if (self.sprite.x > window.innerWidth + EXIT_OFFSCREEN_OFFSET) {
+    self.changeState('peek-right');
+  }
 }
 
 // ── Ceiling crawl ───────────────────────────────────────────

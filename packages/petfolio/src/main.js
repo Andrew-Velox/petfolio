@@ -85,6 +85,19 @@ autoBtn.addEventListener('click', () => {
   menu.classList.remove('visible');
 });
 
+// ── Exit button ───────────────────────────────────────────
+// Makes the avatar walk off-screen in a random direction and freeze
+// at the edge (peek state). Pressing Auto Pilot later calls
+// pet.startAuto() which teleports the avatar back and resumes.
+const exitBtn = document.getElementById('btn-exit');
+exitBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  pet.exitToPeek();
+  menu.classList.remove('visible');
+  // Reflect the new state: auto is now off, so show "Auto Pilot" label.
+  updateAutoButton(false);
+});
+
 function updateAutoButton(active) {
   if (active) {
     autoBtn.innerHTML = '<span class="icon">⏹</span> Stop Auto';

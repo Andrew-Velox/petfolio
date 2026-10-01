@@ -94,3 +94,22 @@ export const CEILING_FALL_CHANCE     = 0.0015;
 // When the pet reaches the left/right edge of the window while on the
 // ceiling, additional chance to release and drop instead of bouncing.
 export const CEILING_EDGE_FALL_CHANCE = 0.35;
+
+// ── Exit / peek ─────────────────────────────────────────────
+// How far past the screen edge the avatar walks before snapping
+// into the peek state. Larger = pet fully disappears before
+// peeking back in. Keep small enough that the "walk off" feels
+// quick (the user just clicked Exit).
+export const EXIT_OFFSCREEN_OFFSET   = 80;     // px past the viewport edge
+// Horizontal offset (positive value) of the peek-sprite's anchor
+// from the viewport edge. With anchor (0.5, 1), this is how much
+// of the sprite extends INTO the viewport from the edge:
+//   visible width ≈ PEEK_INSET_H
+// The rest of the sprite extends OUT of the viewport (clipped by
+// the canvas). Set small for "just the head peeks" — try 30–50.
+export const PEEK_INSET_H            = 66;     // px of sprite visible horizontally
+// Vertical offset: how much of the sprite is visible above the viewport
+// bottom (i.e. how much "peeks UP from behind the ground").
+// The sprite's bottom anchor is pushed PEEK_INSET_V px BELOW the
+// viewport bottom, so only the top portion of the sprite renders.
+export const PEEK_INSET_V            = 120;     // px of sprite visible vertically

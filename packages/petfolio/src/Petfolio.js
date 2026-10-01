@@ -26,6 +26,7 @@ import {
   WALL_CRAWL_MIN_FRAMES, WALL_CRAWL_MAX_FRAMES,
   CEILING_CRAWL_MIN_FRAMES, CEILING_CRAWL_MAX_FRAMES,
   CEILING_FALL_CHANCE, CEILING_EDGE_FALL_CHANCE,
+  PEEK_INSET_H, PEEK_INSET_V,
 } from './constants.js';
 import { buildAnimations }     from './animations.js';
 import { STATE_TRANSITIONS }   from './transitions.js';
@@ -35,6 +36,7 @@ import { initInteraction }   from './interaction.js';
 // ── State physics ───────────────────────────────────────────
 import {
   updateWalkLeft, updateWalkRight,
+  updateWalkOffLeft, updateWalkOffRight,
   updateCrawlLeft, updateCrawlRight,
   updateCrawlTop, updateSayHi,
   snapToCeiling, freezeCrawlTop,
@@ -138,6 +140,11 @@ export class Petfolio {
     this._summonUsed        = false;  // summon entrance plays only once
     this._autoResumeTimer   = null;   // timer that re-enables auto after user actions
 
+    // ── Exit / peek ─────────────────────────────────────────
+    this._isPeeking         = false;   // true while sprite is at peek position (frozen)
+    this._peekSide          = null;    // 'left' | 'right' | null
+    this._lastPeekSide      = null;    // remembered so startAuto() can place sprite back correctly
+
     // ── Wire up input & start loop ──────────────────────────
     initInteraction(this);
     this.app.ticker.add(this._tick, this);
@@ -206,6 +213,70 @@ export class Petfolio {
       case 'walk-grab-right':
       case 'walk-grab-left':
         this._applyAnim(anims.walk, { speed: 0.18 });
+        break;
+
+      case 'walk-off-left':
+        // Exit animation (going left) — physics handled by updateWalkOffLeft.
+        this._applyAnim(anims.walk, { speed: 0.18 });
+        pet.scale.x =  Math.abs(pet.scale.x);  // face left
+        this._isPeeking = false;
+        this._peekSide  = null;
+        break;
+
+      case 'walk-off-right':
+        // Exit animation (going right) — physics handled by updateWalkOffRight.
+        this._applyAnim(anims.walk, { speed: 0.18 });
+        pet.scale.x = -Math.abs(pet.scale.x);  // face right
+        this._isPeeking = false;
+        this._peekSide  = null;
+        break;
+
+      case 'peek-left':
+        // Sprite frozen at bottom-left corner, mostly OFF-SCREEN.
+        // Anchor is (0.5, 1) (bottom-center), so we push the anchor
+        // LEFT of x=0 and BELOW the viewport bottom — only the
+        // top-right ~PEEK_INSET_H × PEEK_INSET_V px of the sprite
+        // remains visible, looking like the avatar is hiding behind
+        // the left wall with just its head peeking out.
+        // Animation LOOP (peek frames cycle continuously).
+        this._applyAnim(anims.peek, { speed: 0.02, loop: true });
+        // FLIPPED: face LEFT so the head looks toward the left edge
+        // (out of the viewport), like the avatar is hiding behind
+        // the left wall and peeking around it.
+        pet.scale.x = -Math.abs(pet.scale.x);
+        // Sprite dimensions after scale (shime1 is 128px source)
+        const peekLeftW = pet.width  || 128 * SPRITE_SCALE;
+        const peekLeftH = pet.height || 128 * SPRITE_SCALE;
+        // x: anchor pushed left so only PEEK_INSET_H px of sprite's
+        //    right side remains inside the viewport
+        pet.x = PEEK_INSET_H - peekLeftW / 2;
+        // y: anchor pushed below viewport bottom so only PEEK_INSET_V px
+        //    of sprite's top remains inside the viewport
+        pet.y = window.innerHeight + (peekLeftH - PEEK_INSET_V);
+        this._isPeeking    = true;
+        this._peekSide     = 'left';
+        this._lastPeekSide = 'left';
+        break;
+
+      case 'peek-right':
+        // Mirror of peek-left — sprite hidden behind the right wall,
+        // head peeking out at the bottom-right corner.
+        // Animation LOOP (peek frames cycle continuously).
+        this._applyAnim(anims.peek, { speed: 0.02, loop: true });
+        // FLIPPED: face RIGHT so the head looks toward the right edge
+        // (out of the viewport), like the avatar is hiding behind
+        // the right wall and peeking around it.
+        pet.scale.x =  Math.abs(pet.scale.x);
+        const peekRightW = pet.width  || 128 * SPRITE_SCALE;
+        const peekRightH = pet.height || 128 * SPRITE_SCALE;
+        // x: anchor pushed right so only PEEK_INSET_H px of sprite's
+        //    left side remains inside the viewport
+        pet.x = window.innerWidth - PEEK_INSET_H + peekRightW / 2;
+        // y: same vertical clip as peek-left
+        pet.y = window.innerHeight + (peekRightH - PEEK_INSET_V);
+        this._isPeeking    = true;
+        this._peekSide     = 'right';
+        this._lastPeekSide = 'right';
         break;
 
       case 'crawl-left':
@@ -336,6 +407,30 @@ export class Petfolio {
 
   startAuto() {
     if (this._autoEnabled) return;
+
+    // Returning from peek state: place the sprite back inside the
+    // viewport near the edge it was peeking from, then resume normal
+    // auto-pilot behavior (which will pick a state from its transition
+    // table, so the avatar won't stand awkwardly).
+    if (this._isPeeking) {
+      this._isPeeking = false;
+      this._peekSide  = null;
+      // Drop sprite back to a sensible on-screen position. Use the
+      // visible "peek" margin so the avatar starts right at the edge
+      // it was hiding behind — looks like it's walking back in.
+      const fromLeft = this._lastPeekSide === 'left';
+      this.sprite.x = fromLeft
+        ? PEEK_INSET_H
+        : window.innerWidth - PEEK_INSET_H;
+      // Bottom-aligned, sitting on the ground
+      this.sprite.y = window.innerHeight;
+      // Face AWAY from the edge it was peeking through (into the
+      // viewport) so the first auto state looks natural.
+      this.sprite.scale.x = fromLeft
+        ?  Math.abs(this.sprite.scale.x)   // was peeking-left → face right
+        : -Math.abs(this.sprite.scale.x);  // was peeking-right → face left
+    }
+
     this._autoEnabled = true;
     // Any pending "resume auto after delay" timer is now redundant
     this._cancelAutoResume();
@@ -351,6 +446,38 @@ export class Petfolio {
     this._cancelAutoResume();
     this.sprite.onComplete = null;  // cancel pending one-shot callback
     this.changeState('idle');
+  }
+
+  /**
+   * Make the avatar walk off the screen in a randomly chosen direction
+   * and enter the peek state (frozen, head visible at the edge).
+   *
+   * Reversed by startAuto(): the sprite teleports back to a sensible
+   * position near where it was, and auto-pilot takes over.
+   *
+   * Safe to call from any state (dragging, falling, mid-animation).
+   * No-op if already peeking.
+   */
+  exitToPeek() {
+    if (this._isPeeking) return;
+
+    // Cancel any in-flight interaction so the sprite is cleanly ours.
+    if (this._isDragging || this._isFalling) {
+      this._isDragging = false;
+      this._isFalling  = false;
+      this._velocityX  = 0;
+      this._velocityY  = 0;
+    }
+
+    // Stop auto-pilot immediately so it doesn't pick a competing state
+    // mid-walk-off. (Calling stopAuto() also clears any pending auto-
+    // resume timer, which is exactly what we want — the user explicitly
+    // dismissed the avatar, so we don't want it auto-returning.)
+    this.stopAuto();
+
+    // Pick a random exit side. Math.random() < 0.5 → right, else left.
+    const goRight = Math.random() < 0.5;
+    this.changeState(goRight ? 'walk-off-right' : 'walk-off-left');
   }
 
   toggleAuto() {
@@ -570,6 +697,8 @@ export class Petfolio {
     switch (this.state) {
       case 'walk-left':        return updateWalkLeft(this);
       case 'walk-right':       return updateWalkRight(this);
+      case 'walk-off-left':    return updateWalkOffLeft(this);
+      case 'walk-off-right':   return updateWalkOffRight(this);
       case 'walk-grab-right':  return updateWalkGrabRight(this);
       case 'walk-grab-left':   return updateWalkGrabLeft(this);
       case 'jump-grab-right':  return updateJumpGrabRight(this);

@@ -94,6 +94,10 @@
     /* Stop / idle */
     .ctx-item.stop { color: #f87171; }
     .ctx-item.stop:hover { background: rgba(239, 68, 68, 0.15); }
+
+    /* Exit — makes the avatar walk off-screen and peek back in */
+    .ctx-item.exit-btn { color: #f87171; }
+    .ctx-item.exit-btn:hover { background: rgba(239, 68, 68, 0.15); }
   </style>
 </head>
 <body>
@@ -164,6 +168,9 @@
     <div class="ctx-divider"></div>
     <button class="ctx-item stop" data-state="sit">
       <span class="icon">⏹</span> Sit / Stop
+    </button>
+    <button class="ctx-item exit-btn" id="btn-exit">
+      <span class="icon">🚪</span> Exit
     </button>
   </div>
 
