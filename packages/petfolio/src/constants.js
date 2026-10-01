@@ -59,10 +59,24 @@ export const VELOCITY_MIN_THRESH  = 1.2;    // px/frame below which we treat rel
 export const AIR_DRAG_Y           = 0.985;  // per-frame multiplier on vy (terminal velocity feel)
 
 // ── Jump-to-wall arc ────────────────────────────────────────
-// Frames to reach the wall during jump-grab (lower = faster arc).
-// 50 ≈ ~0.83s at 60fps (default), 100 ≈ ~1.67s (slower, more readable).
-export const JUMP_ARC_FRAMES      = 100;
-export const JUMP_LAUNCH_VEL_Y    = -5;     // initial upward velocity at launch
+// JUMP_ARC_FRAMES is the *target* number of frames for the pet to
+// travel from launch to wall impact. The horizontal velocity is set
+// so the pet crosses the gap in exactly that many frames.
+//
+// JUMP_LAUNCH_VEL_Y is the initial upward velocity. The pet is in
+// the air for ~2 * |vy| / gravity frames; this value is tuned so the
+// total air time matches JUMP_ARC_FRAMES (with gravity 0.48 per frame
+// used in wall.js, the matching launch velocity is approximately
+// -0.48 * JUMP_ARC_FRAMES / 2).
+//
+//   JUMP_ARC_FRAMES = 70 → air time ≈ 67 frames (1.1s at 60fps)
+//   vy_initial = -16       → apex ~260px above start
+//
+// Tuning tips:
+//   - Lower JUMP_ARC_FRAMES  → faster, more aggressive jump
+//   - More-negative vy_init  → higher arc (more hang time)
+export const JUMP_ARC_FRAMES      = 70;
+export const JUMP_LAUNCH_VEL_Y    = -16;    // initial upward velocity at launch
                                             // (less negative = lower arc, more negative = higher arc)
 
 // ── Grab-on-throw transition ────────────────────────────────

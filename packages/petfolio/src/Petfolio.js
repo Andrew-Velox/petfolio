@@ -309,7 +309,11 @@ export class Petfolio {
         this._applyAnim(anims.grab, { speed: 0.1 });
         pet.scale.x = -Math.abs(pet.scale.x);
         pet.scale.y =  Math.abs(pet.scale.y);
-        this._wallCrawlDir = 1;
+        // Start crawling UP the wall — the natural follow-up to
+        // walking into a wall is "climb up to the ceiling".
+        // _wallCrawlDir = -1 (up) lets the pet reach crawl_top
+        // via the existing ceiling detection (y <= 80).
+        this._wallCrawlDir = -1;
         this._startWallPhase(true);
         break;
 
@@ -318,7 +322,8 @@ export class Petfolio {
         // Sprite un-mirrored: hand reaches the left edge of the frame.
         pet.scale.x =  Math.abs(pet.scale.x);
         pet.scale.y =  Math.abs(pet.scale.y);
-        this._wallCrawlDir = 1;
+        // Start crawling UP (see grab-right comment).
+        this._wallCrawlDir = -1;
         this._startWallPhase(true);
         break;
 

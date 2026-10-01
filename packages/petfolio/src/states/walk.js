@@ -5,25 +5,42 @@
  * read/write sprite position, scale, and call changeState().
  */
 import {
-  WALK_SPEED, CRAWL_SPEED, CRAWL_TOP_SPEED, EDGE_MARGIN,
+  WALK_SPEED, CRAWL_SPEED, CRAWL_TOP_SPEED, EDGE_MARGIN, WALL_SNAP,
   CEILING_Y_OFFSET,
   CRAWL_MOVE_FRAMES, CRAWL_PAUSE_FRAMES,
   CEILING_FALL_CHANCE, CEILING_EDGE_FALL_CHANCE,
   EXIT_OFFSCREEN_OFFSET,
 } from '../constants.js';
+import { grabAnchorX, grabAnchorXLeft } from './wall.js';
 
 // ── Walking ─────────────────────────────────────────────────
+//
+// When walking reaches a wall, the pet grabs it instead of bouncing
+// back the other way. This matches Shimeji's natural behaviour — the
+// pet walks up to a wall, sticks to it, and starts climbing. If for
+// some reason grab fails (very rare), we fall back to bouncing so
+// the pet doesn't get stuck.
 
 export function updateWalkLeft(self) {
-  self.sprite.scale.x = Math.abs(self.sprite.scale.x);
-  self.sprite.x -= WALK_SPEED;
-  if (self.sprite.x < EDGE_MARGIN) self.changeState('walk-right');
+  const pet = self.sprite;
+  pet.scale.x = Math.abs(pet.scale.x);
+  pet.x -= WALK_SPEED;
+  if (pet.x < WALL_SNAP) {
+    // Reached the left wall — snap to grab position and grab.
+    pet.x = grabAnchorXLeft(self);
+    self.changeState('grab-left');
+  }
 }
 
 export function updateWalkRight(self) {
-  self.sprite.scale.x = -Math.abs(self.sprite.scale.x);
-  self.sprite.x += WALK_SPEED;
-  if (self.sprite.x > window.innerWidth - EDGE_MARGIN) self.changeState('walk-left');
+  const pet = self.sprite;
+  pet.scale.x = -Math.abs(pet.scale.x);
+  pet.x += WALK_SPEED;
+  if (pet.x > window.innerWidth - WALL_SNAP) {
+    // Reached the right wall — snap to grab position and grab.
+    pet.x = grabAnchorX(self);
+    self.changeState('grab-right');
+  }
 }
 
 // ── Ground crawl (move-pause cycle) ──────────────────────────
@@ -58,7 +75,10 @@ export function updateCrawlLeft(self) {
     self._crawlHoldFrames = inStepFrame + 1;
   }
 
-  if (pet.x < EDGE_MARGIN) self.changeState('crawl-right');
+  if (pet.x < WALL_SNAP) {
+    pet.x = grabAnchorXLeft(self);
+    self.changeState('grab-left');
+  }
 }
 
 export function updateCrawlRight(self) {
@@ -78,7 +98,10 @@ export function updateCrawlRight(self) {
     self._crawlHoldFrames = inStepFrame + 1;
   }
 
-  if (pet.x > window.innerWidth - EDGE_MARGIN) self.changeState('crawl-left');
+  if (pet.x > window.innerWidth - WALL_SNAP) {
+    pet.x = grabAnchorX(self);
+    self.changeState('grab-right');
+  }
 }
 
 // ── Walk off-screen (Exit animation) ─────────────────────────

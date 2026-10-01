@@ -68,7 +68,9 @@ export const CHARACTERS = {
         21
       ],
       "grab": [
-        13
+        12,
+        13,
+        14
       ],
       "sit": [
         31,
@@ -158,9 +160,6 @@ export const CHARACTERS = {
       ],
       "heldLeftStill": [
         1
-      ],
-      "crawlTop": [
-        22
       ]
     }
   },
@@ -230,7 +229,9 @@ export const CHARACTERS = {
         21
       ],
       "grab": [
-        13
+        12,
+        13,
+        14
       ],
       "sit": [
         31,
@@ -320,9 +321,6 @@ export const CHARACTERS = {
       ],
       "heldLeftStill": [
         1
-      ],
-      "crawlTop": [
-        22
       ]
     }
   }
