@@ -57,7 +57,7 @@ async function main() {
 
     fs.writeFileSync(envPath, updated, 'utf-8');
 
-    console.log(`API key saved to ${envPath}`);
+    console.log(`API key saved to ${envPath} (keep .env out of git).`);
 
 
     console.log('Scanning project directory for relevant files...');
@@ -75,6 +75,16 @@ async function main() {
     fs.writeFileSync(outputPath, JSON.stringify(knowledgeBase, null, 2), 'utf-8');
 
     console.log(`Knowledge base generated and saved to ${outputPath}`);
+    console.log(`Indexed ${knowledgeBase.length} file(s).`);
+    console.log(`
+Next steps
+  1. Serve the knowledge base: it is in public/, so it is available at /petfolio-knowledgeBase.json.
+  2. Keep your API key private: add a small server route that reads ${envKey} from .env and
+     forwards chat requests to the provider, then pass its URL to the widget:
+         Petfolio.summon({ ai: { endpoint: '/api/petfolio' } })
+     (example route in the Petfolio README, "AI chat").
+  3. Quick local test only: skip the route and paste the key into the chat panel — never ship that.
+`);
     console.log('Petfolio CLI setup complete!');
 
 }
