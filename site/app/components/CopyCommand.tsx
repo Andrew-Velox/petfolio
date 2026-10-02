@@ -24,7 +24,7 @@ export default function CopyCommand({ command }: { command: string }) {
       <button
         type="button"
         onClick={copy}
-        aria-label={`Copy ${command}`}
+        aria-label={copied ? `Copied ${command}` : `Copy ${command}`}
         className="shrink-0 rounded-full bg-white/15 px-3.5 py-1.5 text-[13px] font-bold transition hover:bg-white/25"
       >
         {copied ? "Copied ✓" : "Copy"}
