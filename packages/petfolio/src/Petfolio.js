@@ -56,6 +56,7 @@ export class Petfolio {
    * @param {object}            [opts.ai]                     Chat options: { knowledge, endpoint, apiKey, provider, model }
    * @param {string[]}          [opts.phrases]                Cute lines for the SayHi greeting and random chatter (default: built-in list)
    * @param {boolean|{min:number,max:number}} [opts.chatter=true]  Random speech bubbles every min–max seconds (false = only SayHi)
+   * @param {boolean}           [opts.chat=true]              false = hide the chat button (no AI)
    * @param {string[]}          [opts.suggestions]            Starter questions shown as chips in the chat ([] = none)
    * @param {Function}          [opts.onSettings]             Called when the menu's settings button is pressed
    */
@@ -153,7 +154,7 @@ export class Petfolio {
     // ── Wire up input & start loop ──────────────────────────
     this._interaction = initInteraction(this);
     this.ui = opts.ui === false ? null : createUI(this, {
-      name: opts.name, ai: opts.ai, suggestions: opts.suggestions, onSettings: opts.onSettings,
+      name: opts.name, ai: opts.ai, chat: opts.chat, suggestions: opts.suggestions, onSettings: opts.onSettings,
     });
     this.app.ticker.add(this._frame, this);
   }

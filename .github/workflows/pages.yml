@@ -1,0 +1,65 @@
+# Builds the landing page in ./site as a static export and publishes it to GitHub Pages.
+#
+# One-time setup: repo → Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Optional repo variables (Settings → Secrets and variables → Actions → Variables):
+#   PETFOLIO_ENDPOINT   full URL of a deployed /api/petfolio route; leave empty to hide the chat
+#   BASE_PATH           override the URL prefix (default "/<repo name>"; use "/" for a custom domain or a <user>.github.io repo)
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    env:
+      GITHUB_PAGES: "true"
+      NEXT_PUBLIC_BASE_PATH: ${{ vars.BASE_PATH != '' && vars.BASE_PATH || format('/{0}', github.event.repository.name) }}
+      NEXT_PUBLIC_PETFOLIO_ENDPOINT: ${{ vars.PETFOLIO_ENDPOINT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # GitHub Pages is static: server routes can't run there (and break `output: export`).
+      - name: Remove server-only routes
+        run: rm -rf app/api
+
+      - name: Build (prebuild also regenerates the chat knowledge base)
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

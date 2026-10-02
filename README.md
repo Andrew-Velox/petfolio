@@ -99,6 +99,7 @@ Petfolio.summon({
 | `idleScale` | `1` | Multiplier for the long idle periods (1 = original Shimeji). |
 | `name` | `'Petfolio'` | Name shown in the chat and used in the AI prompt. |
 | `ai` | — | Chat connection (see below). Without it the chat asks for a key (dev only). |
+| `chat` | `true` | `false` hides the chat button (a plain pet with a menu, no AI). |
 | `suggestions` | 3 generic questions | Starter questions shown as chips. `[]` = none. |
 | `phrases` | ~30 built in | Lines for the say-hi animation and random chatter. |
 | `chatter` | `{min: 12, max: 30}` | Random speech bubbles. `false` = only the say-hi animation speaks. |
@@ -330,6 +331,26 @@ Adding an avatar: drop a folder of `shime1.png … shime46.png` (plus an optiona
 
 Publishing (both packages): bump the versions, `npm login`, then `npm publish` in `packages/petfolio` and
 `packages/petfolio-cli` (`prepublishOnly` rebuilds and copies this README + the LICENSE into the package).
+
+## Deploying the demo site (`site/`)
+
+The landing page in [`site/`](site) deploys to **GitHub Pages** with the workflow in
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml):
+
+1. Publish `petfolio` and `petfolio-cli` to npm first (the site installs them from npm), run `npm install` in
+   `site/` and commit the updated `package-lock.json`.
+2. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Push to `main` (or run the workflow manually). The site goes live at `https://<user>.github.io/<repo>/`.
+
+Pages only serves static files, so the build is a static export and the `/api/petfolio` route is **left out**.
+By default the pet runs without the chat button. To keep the chat on Pages, deploy the site to a host that runs
+server code (e.g. Vercel, with `PETFOLIO_GROQ_API_KEY` set), then:
+
+- on that server, set `PETFOLIO_ALLOWED_ORIGINS=https://<user>.github.io` (it accepts same-origin requests only otherwise);
+- in the GitHub repo (Settings → Secrets and variables → Actions → **Variables**), add
+  `PETFOLIO_ENDPOINT=https://<your-server>/api/petfolio`.
+
+Custom domain or a `<user>.github.io` repo (site at the root)? Add the Actions variable `BASE_PATH` = `/`.
 
 ## Project structure
 

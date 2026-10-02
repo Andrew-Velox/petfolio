@@ -30,6 +30,8 @@ export interface PetfolioOptions {
   name?: string;
   /** Chat / AI settings. */
   ai?: PetfolioAiOptions;
+  /** `false` = hide the chat button (no AI). Default `true`. */
+  chat?: boolean;
   /** Starter questions shown as chips in the chat. `[]` = none. */
   suggestions?: string[];
   /** Cute lines for the say-hi animation and random chatter. */

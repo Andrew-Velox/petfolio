@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CopyCommand from "./components/CopyCommand";
+import { asset } from "./lib/asset";
 
 const GITHUB = "https://github.com/Andrew-Velox/petfolio";
 const NPM = "https://www.npmjs.com/package/petfolio";
@@ -99,7 +100,7 @@ export default function Home() {
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-line">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/avatars/hi.png" alt="" className="sprite size-9 object-cover" style={{ filter: "none" }} />
+              <img src={asset("/avatars/hi.png")} alt="" className="sprite size-9 object-cover" style={{ filter: "none" }} />
             </span>
             <span className="text-xl font-black tracking-tight">Petfolio</span>
           </Link>
@@ -150,14 +151,14 @@ export default function Home() {
               style={{ left: "60%", top: ".25em", width: ".52em", transform: "translate(-50%, calc(-100% + .05em))" }}
             >
               <img
-                src="/avatars/sit_finn.png"
+                src={asset("/avatars/sit_finn.png")}
                 alt="A cute avatar sitting on the letter o"
                 className="sprite bob block w-full"
                 style={{ ["--tilt" as string]: "-3deg" }}
               />
             </div>
             <img
-              src="/avatars/stand.png"
+              src={asset("/avatars/stand.png")}
               alt="Another cute avatar"
               className="sprite bob-slow absolute z-10"
               style={{ top: ".02em", right: "-.3em", width: ".5em", ["--tilt" as string]: "7deg" }}
@@ -215,7 +216,7 @@ export default function Home() {
         <div className="relative rounded-[36px] border border-line bg-white p-8 shadow-[0_30px_70px_-40px_rgba(40,60,58,.4)] sm:p-12">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/avatars/sit.png"
+            src={asset("/avatars/sit.png")}
             alt=""
             className="sprite bob absolute -top-16 right-6 hidden w-28 sm:block"
             style={{ ["--tilt" as string]: "4deg" }}

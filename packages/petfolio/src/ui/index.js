@@ -21,6 +21,7 @@ import { injectStyles } from './styles.js';
  * @param {string}   [opts.name='Petfolio']  persona name (chat header + prompt)
  * @param {object}   [opts.ai]               ChatClient options (knowledge, endpoint, apiKey, provider, model)
  * @param {string[]} [opts.suggestions]      starter questions shown as chips in the chat (default: 3 generic ones, [] = none)
+ * @param {boolean}  [opts.chat=true]       false = no chat button in the menu (e.g. a static site with no server endpoint)
  * @param {Function} [opts.onSettings]       called when the settings button is pressed
  */
 export function createUI(pet, opts = {}) {
@@ -82,7 +83,7 @@ export function createUI(pet, opts = {}) {
     }
   });
 
-  button('chat', 'Chat', () => { closeAll(); chat.open(); });
+  if (opts.chat !== false) button('chat', 'Chat', () => { closeAll(); chat.open(); });
   button('settings', 'Settings', () => { closeAll(); opts.onSettings?.(); });
   button('exit', 'Exit', () => { closeAll(); chat.close(); pet.exitToPeek(); });
 

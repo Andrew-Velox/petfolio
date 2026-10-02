@@ -40,8 +40,43 @@ function rateLimited(ip: string): boolean {
   return recent.length > RATE_LIMIT;
 }
 
-function json(body: unknown, status: number) {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+// Other sites allowed to call this route from a browser (e.g. the static copy of the
+// site on GitHub Pages): PETFOLIO_ALLOWED_ORIGINS="https://you.github.io,https://example.com"
+const ALLOWED_ORIGINS = (process.env.PETFOLIO_ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+function originAllowed(req: Request): boolean {
+  const origin = req.headers.get("origin");
+  if (!origin) return true; // not a cross-site browser request
+  try {
+    return new URL(origin).host === req.headers.get("host") || ALLOWED_ORIGINS.includes(origin);
+  } catch {
+    return false;
+  }
+}
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) return {};
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+function json(req: Request, body: unknown, status: number) {
+  return Response.json(body, { status, headers: { "Cache-Control": "no-store", ...corsHeaders(req) } });
+}
+
+/** CORS preflight for the allowed origins above. */
+export async function OPTIONS(req: Request) {
+  if (!originAllowed(req)) return new Response(null, { status: 403 });
+  return new Response(null, { status: 204, headers: corsHeaders(req) });
 }
 
 function validMessages(value: unknown): value is Msg[] {
@@ -58,25 +93,22 @@ function validMessages(value: unknown): value is Msg[] {
 }
 
 export async function POST(req: Request) {
-  // Same-origin only (browsers always send Origin on cross-site POSTs).
-  const origin = req.headers.get("origin");
-  if (origin && new URL(origin).host !== req.headers.get("host")) {
-    return json({ error: "forbidden" }, 403);
-  }
+  // Same-origin or an explicitly allowed origin only (browsers always send Origin on cross-site POSTs).
+  if (!originAllowed(req)) return json(req, { error: "forbidden" }, 403);
 
   const provider = Object.values(PROVIDERS).find((p) => process.env[p.env]);
-  if (!provider) return json({ error: "chat is not configured" }, 503);
+  if (!provider) return json(req, { error: "chat is not configured" }, 503);
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (rateLimited(ip)) return json({ error: "rate limited" }, 429);
+  if (rateLimited(ip)) return json(req, { error: "rate limited" }, 429);
 
   let body: { messages?: unknown };
   try {
     body = await req.json();
   } catch {
-    return json({ error: "bad request" }, 400);
+    return json(req, { error: "bad request" }, 400);
   }
-  if (!validMessages(body.messages)) return json({ error: "bad request" }, 400);
+  if (!validMessages(body.messages)) return json(req, { error: "bad request" }, 400);
 
   let upstream: Response;
   try {
@@ -96,13 +128,13 @@ export async function POST(req: Request) {
       signal: AbortSignal.timeout(25_000),
     });
   } catch {
-    return json({ error: "upstream unreachable" }, 502);
+    return json(req, { error: "upstream unreachable" }, 502);
   }
 
   // A rejected server key is OUR misconfiguration, not the visitor's: report it as 502
   // (a 401 would make the widget think the visitor's own key was wrong).
-  if (upstream.status === 401 || upstream.status === 403) return json({ error: "upstream auth failed" }, 502);
-  if (!upstream.ok) return json({ error: "upstream error" }, upstream.status === 429 ? 429 : 502);
+  if (upstream.status === 401 || upstream.status === 403) return json(req, { error: "upstream auth failed" }, 502);
+  if (!upstream.ok) return json(req, { error: "upstream error" }, upstream.status === 429 ? 429 : 502);
 
-  return json(await upstream.json(), 200);
+  return json(req, await upstream.json(), 200);
 }

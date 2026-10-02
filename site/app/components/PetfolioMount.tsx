@@ -2,8 +2,17 @@
 
 import { useEffect } from "react";
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+// Where the chat server lives. Default: this site's own /api/petfolio route.
+// On GitHub Pages there is no server, so it must be set explicitly (a full URL to
+// the deployed route) — if not, the chat button is hidden instead of asking
+// visitors for an API key.
+const ENDPOINT =
+  process.env.NEXT_PUBLIC_PETFOLIO_ENDPOINT || (process.env.NEXT_PUBLIC_STATIC_EXPORT ? "" : "/api/petfolio");
+
 /**
- * Summons the Petfolio pet on this site and wires its chat to /api/petfolio.
+ * Summons the Petfolio pet on this site and wires its chat to the chat route.
  * Petfolio touches `window`/WebGL, so it is imported inside the effect (browser only).
  */
 export default function PetfolioMount() {
@@ -15,7 +24,8 @@ export default function PetfolioMount() {
       if (cancelled) return; // unmounted (or React StrictMode's dev remount) before the import finished
       pet = Petfolio.summon({
         name: "Petfolio",
-        ai: { endpoint: "/api/petfolio" },
+        chat: Boolean(ENDPOINT),
+        ai: { endpoint: ENDPOINT || undefined, knowledge: `${BASE}/petfolio-knowledgeBase.json` },
         suggestions: ["What is Petfolio?", "How do I install it?", "Is it free?"],
       });
     });

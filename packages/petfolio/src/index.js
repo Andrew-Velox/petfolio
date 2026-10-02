@@ -26,6 +26,7 @@ import { CHARACTERS } from './characters/characters.js';
  * @param {number}  [opts.scale]            Override sprite scale
  * @param {boolean} [opts.ui=true]         Right-click menu + chat (false = no UI)
  * @param {string}  [opts.name]             Persona name for the chat
+ * @param {boolean} [opts.chat=true]       false = hide the chat button in the menu
  * @param {object}  [opts.ai]               { knowledge, endpoint, apiKey, provider, model }
  * @param {string[]} [opts.phrases]        Cute lines for the SayHi greeting and random chatter
  * @param {boolean|object} [opts.chatter]  false = no random speech bubbles; { min, max } seconds between them
@@ -44,6 +45,7 @@ _Petfolio.summon = function summon(opts = {}) {
     ui,
     name,
     ai,
+    chat,
     suggestions,
     phrases,
     chatter,
@@ -76,6 +78,7 @@ _Petfolio.summon = function summon(opts = {}) {
   if (ui !== undefined) petOpts.ui = ui;
   if (name) petOpts.name = name;
   if (ai) petOpts.ai = ai;
+  if (chat !== undefined) petOpts.chat = chat;
   if (suggestions) petOpts.suggestions = suggestions;
   if (phrases) petOpts.phrases = phrases;
   if (chatter !== undefined) petOpts.chatter = chatter;
