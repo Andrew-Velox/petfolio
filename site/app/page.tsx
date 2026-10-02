@@ -100,7 +100,7 @@ export default function Home() {
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-line">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset("/avatars/hi.png")} alt="" className="sprite size-9 object-cover" style={{ filter: "none" }} />
+              <img src={asset("/avatars/logo.png")} alt="" className="sprite size-9 object-cover" style={{ filter: "none" }} />
             </span>
             <span className="text-xl font-black tracking-tight">Petfolio</span>
           </Link>

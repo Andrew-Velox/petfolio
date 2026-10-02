@@ -6,7 +6,7 @@ const CSS = `
 /* ── Icon bar ─────────────────────────────────────────── */
 .pf-menu {
   position: fixed; z-index: 100001; display: none; gap: 6px; padding: 8px 10px;
-  background: #a9a9a9; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.28);
+  background: #ffffffad; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.28);
 }
 .pf-menu.pf-open { display: flex; }
 .pf-btn {
