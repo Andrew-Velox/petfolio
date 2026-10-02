@@ -131,7 +131,7 @@ export default function Home() {
           {/* version badge: aligned with the wordmark's left edge */}
           <span className="rise mb-5 flex w-fit items-center gap-2 rounded-full border border-line bg-white/80 px-3.5 py-1.5 text-sm font-semibold text-muted">
             <span className="size-2 rounded-full bg-emerald-400" />
-            v1.0.1 · free & open source
+            v1.1.0 · free & open source
           </span>
           {/* font-size lives on this wrapper so avatar sizes/positions can use em */}
           <div className="relative" style={{ fontSize: "clamp(4.2rem, min(21vw, 30svh), 17rem)" }}>
