@@ -92,8 +92,6 @@
     .ctx-item.auto-off { color: #ef4444; }
 
     /* Stop / idle */
-    .ctx-item.stop { color: #f87171; }
-    .ctx-item.stop:hover { background: rgba(239, 68, 68, 0.15); }
 
     /* Exit — makes the avatar walk off-screen and peek back in */
     .ctx-item.exit-btn { color: #f87171; }
@@ -118,57 +116,12 @@
     </button>
 
     <div class="ctx-divider"></div>
-    <div class="ctx-label">Movement</div>
-    <button class="ctx-item" data-state="walk-left">
-      <span class="icon">←</span> Walk Left
-    </button>
-    <button class="ctx-item" data-state="walk-right">
-      <span class="icon">→</span> Walk Right
-    </button>
-    <button class="ctx-item" data-state="crawl-left">
-      <span class="icon">🐛</span> Crawl Left
-    </button>
-    <button class="ctx-item" data-state="crawl-right">
-      <span class="icon">🐛</span> Crawl Right
-    </button>
-    <button class="ctx-item" data-state="crawl_top">
-      <span class="icon">🔝</span> Ceiling Crawl
-    </button>
-
-    <div class="ctx-divider"></div>
-    <div class="ctx-label">Wall</div>
-    <button class="ctx-item" data-state="walk-grab-right">
-      <span class="icon">🧱</span> Walk & Grab →
-    </button>
-    <button class="ctx-item" data-state="jump-grab-right">
-      <span class="icon">⬆</span> Jump & Grab →
-    </button>
-    <button class="ctx-item" data-state="walk-grab-left">
-      <span class="icon">🧱</span> ← Walk & Grab
-    </button>
-    <button class="ctx-item" data-state="jump-grab-left">
-      <span class="icon">⬆</span> ← Jump & Grab
-    </button>
-
-    <div class="ctx-divider"></div>
     <div class="ctx-label">Emotes</div>
     <button class="ctx-item" data-state="say_hi">
       <span class="icon">👋</span> Say Hi
     </button>
-    <button class="ctx-item" data-state="wave">
-      <span class="icon">✋</span> Wave
-    </button>
     <button class="ctx-item" data-state="summon">
       <span class="icon">⭐</span> Summon
-    </button>
-
-    <div class="ctx-divider"></div>
-    <div class="ctx-label">Actions</div>
-    <button class="ctx-item" data-state="remove_cap">
-      <span class="icon">🧢</span> Remove Cap
-    </button>
-    <button class="ctx-item" data-state="tv_clone">
-      <span class="icon">📺</span> TV Clone
     </button>
 
     <div class="ctx-divider"></div>
@@ -176,9 +129,6 @@
     <div id="ctx-character-list"></div>
 
     <div class="ctx-divider"></div>
-    <button class="ctx-item stop" data-state="sit">
-      <span class="icon">⏹</span> Sit / Stop
-    </button>
     <button class="ctx-item exit-btn" id="btn-exit">
       <span class="icon">🚪</span> Exit
     </button>

@@ -24,6 +24,7 @@ import { CHARACTERS } from './characters/characters.js';
  * @param {string}  [opts.spriteDir]        Override sprite directory
  * @param {string}  [opts.character]        Character key (e.g. 'an2', 'finn')
  * @param {number}  [opts.scale]            Override sprite scale
+ * @param {number}  [opts.idleScale]        Multiplier for long idle periods (1 = original Shimeji, <1 = livelier)
  * @returns {_Petfolio}
  */
 _Petfolio.summon = function summon(opts = {}) {
@@ -32,6 +33,7 @@ _Petfolio.summon = function summon(opts = {}) {
     spriteDir,
     scale,
     character,
+    idleScale,
   } = opts;
 
   // ── Create a fullscreen transparent canvas ──────────────
@@ -57,12 +59,10 @@ _Petfolio.summon = function summon(opts = {}) {
   const petOpts = {};
   if (spriteDir) petOpts.spriteDir = spriteDir;
   if (character) petOpts.character = character;
+  if (scale) petOpts.scale = scale;
+  if (idleScale) petOpts.idleScale = idleScale;
 
   const pet = new _Petfolio(canvas, petOpts);
-
-  if (scale) {
-    pet.sprite.scale.set(scale);
-  }
 
   if (autoStart) {
     pet.startAuto();
