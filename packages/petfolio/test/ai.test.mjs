@@ -113,3 +113,10 @@ test('a pasted key is remembered in storage and can be cleared', () => {
   a.clearApiKey();
   assert.equal(new ChatClient({ storage }).ready, false);
 });
+
+test('tokenize keeps non-Latin words whole (Bengali vowel signs, accents, CJK) and drops punctuation', () => {
+  assert.deepEqual(tokenize('আমার নাম মোহাব্বত'), ['আমার', 'নাম', 'মোহাব্বত']);
+  assert.ok(tokenize('café résumé').includes('café'));
+  assert.ok(tokenize('東京 タワー').length >= 2);
+  assert.ok(!tokenize('rust — fast & safe').includes('—'));
+});

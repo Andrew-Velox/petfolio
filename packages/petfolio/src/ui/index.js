@@ -89,15 +89,18 @@ export function createUI(pet, opts = {}) {
   document.body.append(menu, picker);
 
   // ── Open on right-click over the pet ────────────────────
+  // The canvas is click-through except over the pet (see interaction.js), so a
+  // right-click that lands on the canvas is a right-click on the pet.
   const canvas = pet.app.view;
   const onContext = (e) => {
+    if (e.target !== canvas) return;
     const r = canvas.getBoundingClientRect();
-    const hit = pet.sprite.getBounds().contains(e.clientX - r.left, e.clientY - r.top);
-    if (!hit) return;
+    if (!pet.isOverPet(e.clientX - r.left, e.clientY - r.top)) return;
     e.preventDefault();
     openMenu(e.clientX, e.clientY);
   };
   canvas.addEventListener('contextmenu', onContext);
+  pet.onTap = (x, y) => openMenu(x, y);        // tap / click works too (touch has no right-click)
 
   function openMenu(x, y) {
     picker.classList.remove('pf-open');
@@ -122,6 +125,7 @@ export function createUI(pet, opts = {}) {
     openChat: () => chat.open(),
     destroy() {
       canvas.removeEventListener('contextmenu', onContext);
+      if (pet.onTap) pet.onTap = null;
       document.removeEventListener('pointerdown', onDocClick);
       document.removeEventListener('keydown', onKey);
       chat.destroy();

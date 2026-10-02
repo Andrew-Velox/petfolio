@@ -207,7 +207,9 @@ function filterProseLines(content) {
         // Drop pure heading markers but keep their text.
         const stripped = line.replace(/^#+\s*/, '').replace(/^[-*]\s+/, '');
         if (!stripped) continue;
-        if (NOISE_TOKEN_RE.test(stripped)) continue;
+        // Prose files are hand-written text: only drop lines that are clearly CSS
+        // class lists. (NOISE_TOKEN_RE is for string literals in code and would
+        // wrongly drop sentences containing "flex", "text-", "grid-", ...)
         if (looksLikeClassList(stripped)) continue;
         out.push(stripped);
     }

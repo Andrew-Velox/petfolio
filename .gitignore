@@ -78,3 +78,8 @@ $RECYCLE.BIN/
 # ---------- Misc ----------
 *.tgz
 .pnpm-store/
+
+# Copied from the repo root by scripts/sync-package-docs.mjs at publish time
+packages/petfolio/README.md
+packages/petfolio/LICENSE
+packages/petfolio-cli/LICENSE

@@ -1,6 +1,6 @@
 {
   "name": "petfolio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Drop-in animated desktop pet for any website. Shimeji-style PixiJS companion with auto-pilot, dragging, and 46 animation frames.",
   "type": "module",
   "main": "dist/petfolio.cjs",
@@ -8,6 +8,7 @@
   "browser": "dist/petfolio.mjs",
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "import": "./dist/petfolio.mjs",
       "require": "./dist/petfolio.cjs",
       "default": "./dist/petfolio.mjs"
@@ -15,16 +16,17 @@
   },
   "files": [
     "dist",
+    "types",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:lib": "vite build --mode lib",
+    "build:lib": "vite build --mode lib && vite build --mode global",
     "preview": "vite preview",
     "inline-sprites": "node scripts/inline-sprites.js",
-    "prepublishOnly": "npm run inline-sprites && npm run build:lib"
+    "prepublishOnly": "node ../../scripts/sync-package-docs.mjs --readme && npm run inline-sprites && npm run build:lib"
   },
   "keywords": [
     "desktop-pet",
@@ -47,10 +49,13 @@
     "url": "https://github.com/Andrew-Velox/petfolio/issues"
   },
   "homepage": "https://github.com/Andrew-Velox/petfolio#readme",
-  "dependencies": {
-    "pixi.js": "^6.5.9"
-  },
   "devDependencies": {
+    "@pixi/unsafe-eval": "^6.5.10",
+    "pixi.js": "^6.5.9",
     "vite": "^5.4.0"
-  }
+  },
+  "unpkg": "dist/petfolio.global.js",
+  "jsdelivr": "dist/petfolio.global.js",
+  "types": "types/index.d.ts",
+  "sideEffects": true
 }

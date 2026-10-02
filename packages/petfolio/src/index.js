@@ -64,10 +64,8 @@ _Petfolio.summon = function summon(opts = {}) {
     `;
     document.body.appendChild(canvas);
   }
-  // The canvas itself is pointer-events:none so clicks pass
-  // through, but the sprite inside gets interactive = true
-  // which Pixi handles at the renderer level.
-  canvas.style.pointerEvents = 'auto';
+  // The canvas stays click-through (pointer-events:none) so the host page keeps
+  // working; interaction.js turns it on only while the pointer is over the pet.
 
   // ── Spawn the pet ───────────────────────────────────────
   const petOpts = {};

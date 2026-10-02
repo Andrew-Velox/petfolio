@@ -24,7 +24,7 @@ const STOPWORDS = new Set((
 
 /** lowercase words, light plural stemming, stopwords removed */
 export function tokenize(text) {
-  const words = String(text).toLowerCase().match(/[a-z0-9À-￿]+/g) || [];
+  const words = String(text).toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) || [];
   const out = [];
   for (let w of words) {
     if (w.length < 2 || STOPWORDS.has(w)) continue;

@@ -16,6 +16,7 @@
  *   pet.startAuto();
  */
 import * as PIXI from 'pixi.js';
+import { install as installUnsafeEval } from '@pixi/unsafe-eval';
 
 import {
   SPRITE_SCALE, FRAME_SIZE, SMOOTH_RENDER, SMOOTH_MAX_JUMP,
@@ -32,6 +33,10 @@ import { createUI }          from './ui/index.js';
 import { CHARACTERS, DEFAULT_CHARACTER } from './characters/characters.js';
 
 // Behaviours that just hold still (what the mascot does while auto-pilot is off).
+// Pixi compiles shader uniform-sync code with `new Function`, which a strict
+// Content-Security-Policy (no 'unsafe-eval') forbids. This swaps in a static version.
+installUnsafeEval(PIXI);
+
 const HOLD_BEHAVIORS = new Set(['Idle', 'HoldWall', 'HoldCeiling']);
 // Physics behaviours that must not be interrupted by stopAuto().
 const PHYSICS_BEHAVIORS = new Set(['Fall', 'Dragged', 'Thrown', 'Descend']);
@@ -66,7 +71,7 @@ export class Petfolio {
     this.app = new PIXI.Application({
       view:        canvas,
       resizeTo:    window,
-      transparent: true,
+      backgroundAlpha: 0,
     });
 
     // ── Character / textures ────────────────────────────────
@@ -100,7 +105,12 @@ export class Petfolio {
 
     // ── Engine ──────────────────────────────────────────────
     const world = createWorld(
-      () => ({ width: window.innerWidth, height: window.innerHeight }),
+      // clientWidth excludes a vertical scrollbar, so the pet's right wall is the
+      // visible edge of the page, not the edge behind the scrollbar.
+      () => ({
+        width:  Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth),
+        height: window.innerHeight,
+      }),
       {
         scaling: this._scale,
         config: {
@@ -136,10 +146,12 @@ export class Petfolio {
     this._resumeTicks  = 0;            // ticks until auto-pilot re-enables after a user action
     this._chatWanted   = false;        // chat panel open → hold the 'Chat' pose when grounded
     this._chatWasAuto  = false;
+    this.onTap         = null;         // (clientX, clientY) => void — a tap/click on the pet (the UI opens its menu)
+    this._exitWanted   = false;        // exitToPeek() waiting for the pet to reach the floor
     this.smooth        = SMOOTH_RENDER;
 
     // ── Wire up input & start loop ──────────────────────────
-    initInteraction(this);
+    this._interaction = initInteraction(this);
     this.ui = opts.ui === false ? null : createUI(this, {
       name: opts.name, ai: opts.ai, suggestions: opts.suggestions, onSettings: opts.onSettings,
     });
@@ -231,8 +243,27 @@ export class Petfolio {
    */
   exitToPeek() {
     if (this.isPeeking) return;
-    this.stopAuto();
-    this.changeState(Math.random() < 0.5 ? 'ExitRight' : 'ExitLeft');
+    this.mascot.autoEnabled = false;
+    this._cancelAutoResume();
+    this._exitWanted = true;
+    this._tryExit();
+  }
+
+  /**
+   * The exit walk is a floor walk: from a wall / the ceiling / mid-air the pet
+   * lets go and lands first, then walks off. Called every tick until it starts.
+   */
+  _tryExit() {
+    const m = this.mascot;
+    const name = m.behaviorName;
+    if (m.dragging || name === 'Dragged') return;                  // held: wait for the release
+    if (OFFSCREEN_BEHAVIOR.test(name)) { this._exitWanted = false; return; }
+    if (name !== 'Descend' && m.env.floor.isOn(m.anchor)) {
+      this._exitWanted = false;
+      this.changeState(Math.random() < 0.5 ? 'ExitRight' : 'ExitLeft');
+    } else if (!PHYSICS_BEHAVIORS.has(name) && (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor))) {
+      m.setBehavior(this.config.buildBehavior('Descend'));
+    }                                                              // else: falling / landing — check again next tick
   }
 
   get isPeeking() {
@@ -252,6 +283,7 @@ export class Petfolio {
   startChat() {
     if (this._chatWanted) return;
     this._chatWanted  = true;
+    this._exitWanted  = false;
     this._chatWasAuto = this.mascot.autoEnabled || this.isPeeking;
     if (this.isPeeking) this.startAuto();     // walk back in…
     this.mascot.autoEnabled = false;          // …then hold still, don't wander off
@@ -273,6 +305,11 @@ export class Petfolio {
   }
 
   get isChatting() { return this._chatWanted; }
+
+  /** Is this canvas-space point on the pet's visible pixels? (used for right-click) */
+  isOverPet(x, y) {
+    return this._interaction ? this._interaction.overPet({ x, y }) : this.sprite.getBounds().contains(x, y);
+  }
 
   /** Switch to the Chat pose as soon as the mascot is standing on the floor. */
   _holdForChat() {
@@ -320,6 +357,7 @@ export class Petfolio {
   destroy() {
     this.mascot.autoEnabled = false;
     this._chatWanted = false;
+    this._interaction?.destroy();
     this.ui?.destroy();
     this.app.ticker.remove(this._frame, this);
     this.app.destroy(true, { children: true, texture: false, baseTexture: false });
@@ -375,6 +413,7 @@ export class Petfolio {
     this.env.tick();
     this.mascot.tick();
     if (this._chatWanted) this._holdForChat();
+    if (this._exitWanted) this._tryExit();
 
     if (this._bubbleTicks > 0 && --this._bubbleTicks === 0) this._hideBubbles();
     if (this._chatter && --this._chatterTicks <= 0) this._maybeChatter();
@@ -422,6 +461,7 @@ export class Petfolio {
     spr.y = y;
 
     this.bubble.follow();
+    this._interaction?.refresh();
     if (this.ui?.chat.isOpen) this.ui.chat.follow(this.bubble.placement(), this.app.view.getBoundingClientRect());
   }
 

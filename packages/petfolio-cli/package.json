@@ -1,7 +1,7 @@
 {
   "name": "petfolio-cli",
-  "version": "1.0.2",
-  "description": "CLI for Petfolio — scans your project and generates a knowledge base JSON for the AI assistant.",
+  "version": "1.1.0",
+  "description": "CLI for Petfolio \u2014 scans your project and generates a knowledge base JSON for the AI assistant.",
   "type": "module",
   "main": "bin/index.js",
   "bin": {
@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bin/index.js"
+    "start": "node bin/index.js",
+    "prepublishOnly": "node ../../scripts/sync-package-docs.mjs"
   },
   "keywords": [
     "petfolio",

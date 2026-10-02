@@ -19,6 +19,8 @@ const DEFAULT_IGNORES = [
     '**/.vercel/**',
     '**/.netlify/**',
     '**/bin/**',
+    // Server routes hold error messages and prompts, not content for visitors
+    '**/api/**',
     // Generated artifacts from this same CLI
     '**/public/petfolio-knowledgeBase.json',
     // Tests produce noise that's not representative of the product

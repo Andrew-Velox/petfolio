@@ -140,8 +140,24 @@ const CSS = `
 }
 `;
 
+let injected = false;
+
+/**
+ * Adds the CSS once. A constructable stylesheet is used when available because,
+ * unlike a <style> tag, it is not blocked by a strict Content-Security-Policy
+ * (style-src without 'unsafe-inline'); a <style> tag is the fallback.
+ */
 export function injectStyles() {
-  if (typeof document === 'undefined' || document.getElementById('petfolio-ui-style')) return;
+  if (typeof document === 'undefined' || injected || document.getElementById('petfolio-ui-style')) return;
+  injected = true;
+  try {
+    if ('adoptedStyleSheets' in document && typeof CSSStyleSheet !== 'undefined' && 'replaceSync' in CSSStyleSheet.prototype) {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(CSS);
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+      return;
+    }
+  } catch { /* fall through to <style> */ }
   const el = document.createElement('style');
   el.id = 'petfolio-ui-style';
   el.textContent = CSS;
