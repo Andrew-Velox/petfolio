@@ -22,6 +22,12 @@ export const AUTO_RESUME_DELAY_MS = 3000;
 // holding a wall: 20–60 s). 1 = original Shimeji. Try 0.3 for a livelier pet.
 export const IDLE_DURATION_SCALE  = 1;
 
+// ── Chatter ─────────────────────────────────────────────────
+// The pet occasionally says something cute on its own, whatever it is doing.
+export const CHATTER_MIN_S    = 12;     // seconds between random messages (min…max)
+export const CHATTER_MAX_S    = 30;
+export const CHATTER_SHOW_MS  = 3500;   // how long such a message stays up
+
 // ── Exit / peek ─────────────────────────────────────────────
 // How far past the screen edge the avatar walks before it freezes
 // into the peek pose.

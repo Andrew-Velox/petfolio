@@ -99,12 +99,25 @@ export function makeBubble(petSprite, initialText, opts = {}) {
     },
     show() { container.visible = true;  },
     hide() { container.visible = false; },
+    /**
+     * Where the bubble's bottom edge is anchored right now: the box grows
+     * to the right of x when the pet faces right, to the left otherwise.
+     * Other UI (the chat panel) uses this to take the bubble's place.
+     */
+    placement() {
+      const offsetY = (petSprite.height * Math.abs(petSprite.scale.y)) + offsetYExtra;
+      return {
+        x: petSprite.x + sideOffset,
+        y: petSprite.y - offsetY,
+        facingRight: mirrorOnFacing ? petSprite.scale.x < 0 : false,
+      };
+    },
     follow() {
       if (!container.visible) return;
-      const offsetY = (petSprite.height * Math.abs(petSprite.scale.y)) + offsetYExtra;
+      const { x, y } = this.placement();
       layoutIfFacingFlipped();
-      container.x = petSprite.x + sideOffset;
-      container.y = petSprite.y - offsetY;
+      container.x = x;
+      container.y = y;
       container.scale.x = 1;
       txt.scale.x       = 1;
     },

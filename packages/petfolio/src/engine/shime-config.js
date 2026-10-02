@@ -27,6 +27,7 @@ import {
   stay, move, animate, jump, fall, dragged, regist,
 } from './actions.js';
 import { BehaviorBuilder, Configuration } from './behavior.js';
+import { phrasePicker } from '../phrases.js';
 
 // Peek / exit geometry (px), see constants.js for what they mean.
 const DEFAULTS = {
@@ -34,6 +35,7 @@ const DEFAULTS = {
   exitOffscreen: 80,
   peekInsetH: 66,
   peekInsetV: 120,
+  pickPhrase: null,        // () => string; SayHi's message (default: random cute phrase)
 };
 
 // ── tiny helpers ────────────────────────────────────────────
@@ -48,6 +50,7 @@ const rnd  = () => Math.random();
 
 export function createConfig(userOpts = {}) {
   const o = { ...DEFAULTS, ...userOpts };
+  const pickPhrase = o.pickPhrase ?? phrasePicker();
 
   /** `${500+Math.random()*1000}` — the long stand/sit/lie durations, scalable. */
   const longTime  = () => once(() => (500 + rnd() * 1000) * o.idleScale);
@@ -307,6 +310,22 @@ export function createConfig(userOpts = {}) {
   A.HoldWall    = seq([ref('GrabWall')]);
   A.HoldCeiling = seq([ref('GrabCeiling')]);
 
+  // Let go of a wall / the ceiling and drop to the floor (the same three
+  // branches Shimeji's ChaseMouse starts with). Plain Fall would just
+  // re-grab the wall it is clinging to.
+  A.Descend = seq([
+    seq([ref('Offset', { Y: 1 }), ref('Falling'), ref('Bouncing')],
+      { Condition: once((m) => m.env.ceiling.isOn(m.anchor)) }),
+    seq([ref('Offset', { X: 1 }), ref('Falling'), ref('Bouncing')],
+      { Condition: once((m) => m.env.wall.isOn(m.anchor) && m.env.workArea.leftBorder.isOn(m.anchor)) }),
+    seq([ref('Offset', { X: -1 }), ref('Falling'), ref('Bouncing')],
+      { Condition: once((m) => m.env.wall.isOn(m.anchor) && m.env.workArea.rightBorder.isOn(m.anchor)) }),
+  ]);
+
+  // Chat: hold the SayHi frame (34) on the floor for as long as the chat
+  // panel is open (no Duration → never ends; Petfolio.endChat() releases it).
+  A.Chat = stay('Floor', [anim([w(34, 0, 0, 250)])]);
+
   // Border-less walk used for exit / enter (the floor check would otherwise
   // throw as soon as the anchor leaves the viewport).
   A.WalkOffscreen = move(null, [anim(strides(2, 3, -2, 6))]);
@@ -314,7 +333,7 @@ export function createConfig(userOpts = {}) {
   // Emotes ----------------------------------------------------
   A.WalkHi = move('Floor', [anim([w(34, -2, 0, 6), w(35, -2, 0, 6), w(34, -2, 0, 6), w(36, -2, 0, 6)])]);
   A.SayHi = seq([
-    ref('Say', { Text: 'Hi there! 👋' }),
+    ref('Say', { Text: once(() => pickPhrase()) }),
     ref('WalkHi', { TargetX: acrossArea() }),
     ref('Stand', { Duration: between(40, 40) }),
   ]);
@@ -467,8 +486,8 @@ export function createConfig(userOpts = {}) {
     }),
 
     // Petfolio: hold / manual / exit (never picked automatically) ----
-    B('Idle', 0), B('HoldWall', 0), B('HoldCeiling', 0),
-        B('Summon', 0),
+    B('Idle', 0), B('HoldWall', 0), B('HoldCeiling', 0), B('Chat', 0), B('Descend', 0),
+    B('Summon', 0),
     B('ExitLeft',  0, { allowOffscreen: true, forceNext: true, next: next(false, ['PeekLeft',  1]) }),
     B('ExitRight', 0, { allowOffscreen: true, forceNext: true, next: next(false, ['PeekRight', 1]) }),
     B('PeekLeft',  0, { allowOffscreen: true }),

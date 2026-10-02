@@ -6,7 +6,8 @@
  *
  *   pointermove          → environment cursor position (feeds Dragged and
  *                          the cursor velocity used when thrown)
- *   pointerdown (sprite) → switch to the "Dragged" behaviour
+ *   pointerdown (sprite) → switch to the "Dragged" behaviour (or, while
+ *                          peeking from the screen edge, call the pet back)
  *   pointerup            → switch to the "Thrown" behaviour, which launches
  *                          the mascot with the cursor's velocity
  *
@@ -34,9 +35,11 @@ export function initInteraction(self) {
 
   sprite.on('pointerdown', (e) => {
     // Only the left button drags; right/middle are handled elsewhere
-    // (main.js opens the context menu on right-click).
+    // (ui/index.js opens the menu on right-click).
     const button = e.button ?? e.data?.button ?? 0;
     if (button !== 0) return;
+    // Clicking the peeking pet calls it back instead of dragging it.
+    if (self.isPeeking) { self.startAuto(); return; }
     const { x, y } = pos(e);
     cursor.snapTo(x, y);
     self._beginDrag();

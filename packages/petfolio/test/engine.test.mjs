@@ -303,3 +303,71 @@ test('exit walks off-screen and freezes in the peek pose; enter walks back in', 
 test('tick rate constant matches Shimeji (25 fps)', () => {
   assert.equal(TICK_MS, 40);
 });
+
+// ── chat pose ───────────────────────────────────────────────
+
+test('Chat holds one frame on the floor indefinitely, even with auto-pilot on', () => {
+  const { mascot, env, config, step } = makeWorld(11);
+  mascot.autoEnabled = true;
+  step(600);                                            // land, let auto-pilot run a while
+  // Wait until it is standing on the floor, then ask it to chat.
+  for (let i = 0; i < 5000 && !env.floor.isOn(mascot.anchor); i++) step(1);
+  assert.ok(env.floor.isOn(mascot.anchor));
+  mascot.setBehavior(config.buildBehavior('Chat'));
+  const x = mascot.anchor.x;
+  const imgs = new Set();
+  for (let i = 0; i < 5000; i++) { step(1); imgs.add(mascot.pose.img); }   // 200 s
+  assert.equal(mascot.behaviorName, 'Chat');
+  assert.equal(mascot.anchor.x, x);
+  assert.deepEqual([...imgs], [34]);   // the SayHi frame
+});
+
+test('Chat falls (not freezes) if the floor disappears under it', () => {
+  const { mascot, config, step, view } = makeWorld(12);
+  step(300);
+  mascot.setBehavior(config.buildBehavior('Chat'));
+  step(5);
+  view.height += 200;                                   // window grows: floor moves down
+  step(200);
+  assert.equal(mascot.anchor.y, view.height);
+});
+
+test('Descend lets go of a wall or the ceiling and lands on the floor', () => {
+  for (const [label, x, y] of [['left wall', 0, 300], ['right wall', VIEW.width, 300], ['ceiling', 500, 0]]) {
+    const { mascot, env, config, step } = makeWorld(21);
+    mascot.autoEnabled = false;
+    mascot.anchor.x = x; mascot.anchor.y = y;
+    mascot.setBehavior(config.buildBehavior('Descend'));
+    step(300);
+    assert.ok(env.floor.isOn(mascot.anchor), `${label}: ended on the floor (${mascot.anchor.x},${mascot.anchor.y})`);
+  }
+});
+
+// ── phrases ─────────────────────────────────────────────────
+
+test('SayHi says a different cute phrase each time (never "Hi there")', () => {
+  const said = [];
+  for (let seed = 1; seed <= 25; seed++) {
+    const { mascot, config, step } = makeWorld(seed);
+    mascot.autoEnabled = false;
+    step(300);
+    mascot.onSay = (t) => said.push(t);
+    mascot.setBehavior(config.buildBehavior('SayHi'));
+    step(5);
+  }
+  assert.equal(said.length, 25);
+  assert.ok(new Set(said).size >= 8, `expected variety, got ${new Set(said).size}`);
+  assert.ok(said.every((t) => typeof t === 'string' && t.length > 0 && t.length <= 40), 'short, non-empty');
+  assert.ok(!said.some((t) => /hi there/i.test(t)));
+});
+
+test('phrasePicker never repeats back to back and honours a custom list', async () => {
+  const { phrasePicker, DEFAULT_PHRASES } = await import('../src/phrases.js');
+  Math.random = seeded(5);
+  const pick = phrasePicker(['a', 'b', 'c']);
+  let prev = null;
+  for (let i = 0; i < 200; i++) { const p = pick(); assert.notEqual(p, prev); prev = p; }
+  assert.equal(phrasePicker(['only'])(), 'only');
+  assert.ok(DEFAULT_PHRASES.every((p) => p.length <= 40));
+  assert.ok(DEFAULT_PHRASES.includes(phrasePicker([])()));          // empty list falls back
+});

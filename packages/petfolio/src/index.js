@@ -24,6 +24,13 @@ import { CHARACTERS } from './characters/characters.js';
  * @param {string}  [opts.spriteDir]        Override sprite directory
  * @param {string}  [opts.character]        Character key (e.g. 'an2', 'finn')
  * @param {number}  [opts.scale]            Override sprite scale
+ * @param {boolean} [opts.ui=true]         Right-click menu + chat (false = no UI)
+ * @param {string}  [opts.name]             Persona name for the chat
+ * @param {object}  [opts.ai]               { knowledge, endpoint, apiKey, provider, model }
+ * @param {string[]} [opts.phrases]        Cute lines for the SayHi greeting and random chatter
+ * @param {boolean|object} [opts.chatter]  false = no random speech bubbles; { min, max } seconds between them
+ * @param {string[]} [opts.suggestions]    Starter questions shown as chips in the chat ([] = none)
+ * @param {Function} [opts.onSettings]      Settings button callback
  * @param {number}  [opts.idleScale]        Multiplier for long idle periods (1 = original Shimeji, <1 = livelier)
  * @returns {_Petfolio}
  */
@@ -34,6 +41,13 @@ _Petfolio.summon = function summon(opts = {}) {
     scale,
     character,
     idleScale,
+    ui,
+    name,
+    ai,
+    suggestions,
+    phrases,
+    chatter,
+    onSettings,
   } = opts;
 
   // ── Create a fullscreen transparent canvas ──────────────
@@ -61,6 +75,13 @@ _Petfolio.summon = function summon(opts = {}) {
   if (character) petOpts.character = character;
   if (scale) petOpts.scale = scale;
   if (idleScale) petOpts.idleScale = idleScale;
+  if (ui !== undefined) petOpts.ui = ui;
+  if (name) petOpts.name = name;
+  if (ai) petOpts.ai = ai;
+  if (suggestions) petOpts.suggestions = suggestions;
+  if (phrases) petOpts.phrases = phrases;
+  if (chatter !== undefined) petOpts.chatter = chatter;
+  if (onSettings) petOpts.onSettings = onSettings;
 
   const pet = new _Petfolio(canvas, petOpts);
 

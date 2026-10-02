@@ -21,17 +21,22 @@ import {
   SPRITE_SCALE, FRAME_SIZE, SMOOTH_RENDER, SMOOTH_MAX_JUMP,
   AUTO_RESUME_DELAY_MS, IDLE_DURATION_SCALE,
   EXIT_OFFSCREEN_OFFSET, PEEK_INSET_H, PEEK_INSET_V,
+  CHATTER_MIN_S, CHATTER_MAX_S, CHATTER_SHOW_MS,
 } from './constants.js';
+import { phrasePicker }       from './phrases.js';
 import { createWorld, STATE_ALIASES, TICK_MS } from './engine/index.js';
 import { makeTextureLoader } from './textures.js';
 import { makeBubble }        from './bubble.js';
 import { initInteraction }   from './interaction.js';
+import { createUI }          from './ui/index.js';
 import { CHARACTERS, DEFAULT_CHARACTER } from './characters/characters.js';
 
 // Behaviours that just hold still (what the mascot does while auto-pilot is off).
 const HOLD_BEHAVIORS = new Set(['Idle', 'HoldWall', 'HoldCeiling']);
 // Physics behaviours that must not be interrupted by stopAuto().
-const PHYSICS_BEHAVIORS = new Set(['Fall', 'Dragged', 'Thrown']);
+const PHYSICS_BEHAVIORS = new Set(['Fall', 'Dragged', 'Thrown', 'Descend']);
+// Exit / peek / enter sequences happen off-screen; the chat waits for them.
+const OFFSCREEN_BEHAVIOR = /^(Exit|Peek|Enter)/;
 
 export class Petfolio {
   /**
@@ -41,6 +46,13 @@ export class Petfolio {
    * @param {string}            [opts.character]              Character key (default: first registered)
    * @param {number}            [opts.scale]                  Sprite scale (default 0.95)
    * @param {number}            [opts.idleScale]              Multiplier for long idle periods (default 1 = Shimeji)
+   * @param {boolean}           [opts.ui=true]                Right-click icon bar + chat panel (false = headless pet)
+   * @param {string}            [opts.name='Petfolio']        Persona name shown in the chat
+   * @param {object}            [opts.ai]                     Chat options: { knowledge, endpoint, apiKey, provider, model }
+   * @param {string[]}          [opts.phrases]                Cute lines for the SayHi greeting and random chatter (default: built-in list)
+   * @param {boolean|{min:number,max:number}} [opts.chatter=true]  Random speech bubbles every min–max seconds (false = only SayHi)
+   * @param {string[]}          [opts.suggestions]            Starter questions shown as chips in the chat ([] = none)
+   * @param {Function}          [opts.onSettings]             Called when the menu's settings button is pressed
    */
   constructor(canvas, opts = {}) {
     const initialChar = opts.character ?? DEFAULT_CHARACTER;
@@ -77,6 +89,15 @@ export class Petfolio {
     });
     this.app.stage.addChild(this.bubble.container);
 
+    // ── Phrases (SayHi + random chatter share one picker, so no repeats) ──
+    this._pickPhrase = phrasePicker(opts.phrases);
+    const chatter = opts.chatter === false ? null
+      : { min: CHATTER_MIN_S, max: CHATTER_MAX_S, ...(typeof opts.chatter === 'object' ? opts.chatter : {}) };
+    this._chatter      = chatter;
+    this._chatterTicks = 0;            // ticks until the next random message
+    this._bubbleTicks  = 0;            // >0: a timed message is up (survives behaviour changes)
+    this._scheduleChatter();
+
     // ── Engine ──────────────────────────────────────────────
     const world = createWorld(
       () => ({ width: window.innerWidth, height: window.innerHeight }),
@@ -87,6 +108,7 @@ export class Petfolio {
           exitOffscreen: EXIT_OFFSCREEN_OFFSET,
           peekInsetH:    PEEK_INSET_H,
           peekInsetV:    PEEK_INSET_V,
+          pickPhrase:    this._pickPhrase,
         },
       },
     );
@@ -94,7 +116,12 @@ export class Petfolio {
     this.config = world.config;
     this.mascot = world.mascot;
     this.mascot.autoEnabled = false;              // startAuto() turns it on
-    this.mascot.onBehavior  = () => this._hideBubbles();
+    this.mascot.onBehavior  = (name) => {
+      // A timed chatter bubble rides along with the next animation; anything
+      // that takes over the pet (held, exiting, chatting) clears it.
+      if (this._bubbleTicks > 0 && !/^(Dragged|Thrown|Exit|Peek|Chat)/.test(name)) return;
+      this._hideBubbles();
+    };
     this.mascot.onSay       = (text) => this._say(text);
 
     // Spawn mid-screen and drop (same as the original), then idle / auto.
@@ -107,10 +134,15 @@ export class Petfolio {
     this._prevX        = this.mascot.anchor.x;
     this._prevY        = this.mascot.anchor.y;
     this._resumeTicks  = 0;            // ticks until auto-pilot re-enables after a user action
+    this._chatWanted   = false;        // chat panel open → hold the 'Chat' pose when grounded
+    this._chatWasAuto  = false;
     this.smooth        = SMOOTH_RENDER;
 
     // ── Wire up input & start loop ──────────────────────────
     initInteraction(this);
+    this.ui = opts.ui === false ? null : createUI(this, {
+      name: opts.name, ai: opts.ai, suggestions: opts.suggestions, onSettings: opts.onSettings,
+    });
     this.app.ticker.add(this._frame, this);
   }
 
@@ -209,6 +241,54 @@ export class Petfolio {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // PUBLIC API — Chat
+  // ═══════════════════════════════════════════════════════════
+  //
+  // While the chat panel is open the mascot stands still on the floor in a
+  // single frame (the SayHi pose) and the panel takes the speech bubble's
+  // place, positioned exactly like the SayHi message. If it is on a wall / ceiling / in the air it
+  // gets down first; if peeking from the edge it walks back in.
+
+  startChat() {
+    if (this._chatWanted) return;
+    this._chatWanted  = true;
+    this._chatWasAuto = this.mascot.autoEnabled || this.isPeeking;
+    if (this.isPeeking) this.startAuto();     // walk back in…
+    this.mascot.autoEnabled = false;          // …then hold still, don't wander off
+    this._cancelAutoResume();
+    this._hideBubbles();
+    this._holdForChat();
+  }
+
+  endChat() {
+    if (!this._chatWanted) return;
+    this._chatWanted = false;
+    const m = this.mascot;
+    if (this._chatWasAuto) m.autoEnabled = true;
+    if (m.behaviorName === 'Chat') {
+      m.setBehavior(m.autoEnabled
+        ? this.config.buildNextBehavior(null, m)
+        : this.config.buildHold(m));
+    }
+  }
+
+  get isChatting() { return this._chatWanted; }
+
+  /** Switch to the Chat pose as soon as the mascot is standing on the floor. */
+  _holdForChat() {
+    const m    = this.mascot;
+    const name = m.behaviorName;
+    if (name === 'Chat' || name === 'Dragged' || name === 'Descend' || m.dragging || OFFSCREEN_BEHAVIOR.test(name)) return;
+    // Fall / Thrown are fine to cut once the feet touch the floor (their own
+    // follow-up would be a 4–8 s stand); in mid-air they just keep falling.
+    if (m.env.floor.isOn(m.anchor)) {
+      m.setBehavior(this.config.buildBehavior('Chat'));
+    } else if (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor)) {
+      m.setBehavior(this.config.buildBehavior('Descend'));   // let go, drop to the floor
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // PUBLIC API — Character & size
   // ═══════════════════════════════════════════════════════════
 
@@ -239,6 +319,8 @@ export class Petfolio {
 
   destroy() {
     this.mascot.autoEnabled = false;
+    this._chatWanted = false;
+    this.ui?.destroy();
     this.app.ticker.remove(this._frame, this);
     this.app.destroy(true, { children: true, texture: false, baseTexture: false });
   }
@@ -250,6 +332,7 @@ export class Petfolio {
   _beginDrag() {
     const m = this.mascot;
     m.dragging = true;
+    this._hideBubbles();
     m.setBehavior(this.config.buildBehavior('Dragged'));
   }
 
@@ -291,6 +374,10 @@ export class Petfolio {
   _step() {
     this.env.tick();
     this.mascot.tick();
+    if (this._chatWanted) this._holdForChat();
+
+    if (this._bubbleTicks > 0 && --this._bubbleTicks === 0) this._hideBubbles();
+    if (this._chatter && --this._chatterTicks <= 0) this._maybeChatter();
 
     if (this._resumeTicks > 0 && --this._resumeTicks === 0 && !this.mascot.autoEnabled) {
       this.startAuto();
@@ -335,16 +422,38 @@ export class Petfolio {
     spr.y = y;
 
     this.bubble.follow();
+    if (this.ui?.chat.isOpen) this.ui.chat.follow(this.bubble.placement(), this.app.view.getBoundingClientRect());
   }
 
   // ── Bubbles ─────────────────────────────────────────────
   _hideBubbles() {
+    this._bubbleTicks = 0;
     this.bubble.hide();
   }
 
-  _say(text) {
+  /** @param {number} [ticks]  >0 = hide by itself after this many ticks, otherwise it lasts until the behaviour changes */
+  _say(text, ticks = 0) {
     this.bubble.setText(text);
     this.bubble.show();
+    this._bubbleTicks = ticks;
+  }
+
+  // ── Random chatter ──────────────────────────────────────
+  _scheduleChatter(ticks) {
+    const c = this._chatter;
+    if (!c) return;
+    const seconds = c.min + Math.random() * Math.max(0, c.max - c.min);
+    this._chatterTicks = ticks ?? Math.max(1, Math.round(seconds * 1000 / TICK_MS));
+  }
+
+  /** Say something cute — unless the pet is busy being held, chatting, or out of sight. */
+  _maybeChatter() {
+    const m = this.mascot;
+    const busy = m.dragging || this._chatWanted || this.bubble.container.visible
+      || /^(Dragged|Thrown|Exit|Peek|Enter)/.test(m.behaviorName) || m.isOutOfScreen();
+    if (busy) { this._scheduleChatter(50); return; }      // look again in 2 s
+    this._say(this._pickPhrase(), Math.round(CHATTER_SHOW_MS / TICK_MS));
+    this._scheduleChatter();
   }
 
   // ── Auto-resume ─────────────────────────────────────────
