@@ -2,8 +2,7 @@
 #
 # One-time setup: repo → Settings → Pages → Build and deployment → Source: "GitHub Actions".
 # Optional repo variables (Settings → Secrets and variables → Actions → Variables):
-#   PETFOLIO_ENDPOINT   address of the chat server (the Cloudflare Worker in ./worker, or a deployed
-#                       /api/petfolio route elsewhere); leave empty to hide the chat button
+#   PETFOLIO_ENDPOINT   full URL of your deployed /api/petfolio route (e.g. on Vercel); leave empty to hide the chat button
 #   BASE_PATH           override the URL prefix (default "/<repo name>"; use "/" for a custom domain or a <user>.github.io repo)
 name: Deploy site to GitHub Pages
 

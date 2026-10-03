@@ -426,10 +426,6 @@ page, so the chat needs a small server somewhere. Pick one, then add the GitHub 
 `PETFOLIO_ENDPOINT` (Settings → Secrets and variables → Actions → *Variables*) with its address and re-run the
 Pages workflow:
 
-- **Cloudflare Worker (recommended, free, no card)** — [`worker/`](worker) is a ready-made chat server and
-  [`.github/workflows/chat-worker.yml`](.github/workflows/chat-worker.yml) deploys it from GitHub: add three
-  repo *secrets* (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `PETFOLIO_GROQ_API_KEY`) and push. Step by
-  step: [`worker/README.md`](worker/README.md). `PETFOLIO_ENDPOINT` = `https://petfolio-chat.<you>.workers.dev`.
 - **Vercel (or any Node host)** — deploy `site/` (Root Directory `site`) with `PETFOLIO_GROQ_API_KEY` and
   `PETFOLIO_ALLOWED_ORIGINS=https://<user>.github.io` (origin only: no path, no trailing slash).
   `PETFOLIO_ENDPOINT` = `https://<project>.vercel.app/api/petfolio`.
@@ -452,7 +448,6 @@ packages/
 │   ├── types/index.d.ts
 │   └── test/
 └── petfolio-cli/        ← about-me.txt → public/petfolio-knowledge.json (npm: petfolio-cli)
-worker/                  ← chat server for Cloudflare Workers (holds the AI key for a static site)
 site/                    ← the Petfolio website (Next.js) — also a working example of everything above
 ```
 

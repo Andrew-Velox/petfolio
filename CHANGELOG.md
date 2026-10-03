@@ -21,10 +21,6 @@
 - Tap / click on the pet opens the menu (touch screens have no right-click).
 - Works under a strict Content-Security-Policy (no `unsafe-eval`, no `unsafe-inline` styles).
 
-### Also in this release
-- `worker/`: a ready-made chat server for Cloudflare Workers (free) plus a GitHub Actions workflow that deploys it,
-  so a static GitHub Pages site can have the chat without Vercel.
-
 ### Fixed
 - The full-screen canvas swallowed every click, text selection and scroll of the host page. It is now
   click-through; only the pet's visible pixels catch the mouse.
