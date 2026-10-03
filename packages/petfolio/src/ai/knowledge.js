@@ -1,149 +1,73 @@
 /**
- * ai/knowledge.js — Load and search the knowledge base made by petfolio-cli.
+ * ai/knowledge.js — Load the knowledge file made by petfolio-cli.
  *
- * The CLI writes `public/petfolio-knowledgeBase.json`:
- *     [ { "source": "src/pages/about.jsx", "content": "…prose…" }, … ]
+ * `npx petfolio-cli about-me.txt` writes `public/petfolio-knowledge.json`:
  *
- * Free-tier models have small context/rate limits, so we never send the
- * whole file. Each question is answered from the few chunks that match it:
+ *     { "version": 2,
+ *       "sections": [ { "title": "Projects > Petfolio", "text": "…" }, … ],
+ *       "personality": "…optional…" }
  *
- *   1. split every entry into ~500-char chunks on sentence boundaries
- *   2. score chunks against the question (TF·IDF over plain words, with a
- *      small bonus when the file path itself matches)
- *   3. return the best few, capped at a character budget
+ * The widget fetches it once, keeps it in memory, turns the sections into one
+ * titled text and sends ALL of it with every question ("context stuffing"). There is no search, no embeddings
+ * and nothing to index — which is why the file is kept small (see the limits).
  *
- * No embeddings, no network, no dependencies — works offline and is tiny.
  * Pure functions only (no DOM), so it runs under Node for tests.
  */
 
-const STOPWORDS = new Set((
-  'a an and are as at be but by can do does for from has have how i if in is it its me my of on or our ' +
-  'so that the their them then there these they this to us was we what when where which who why will with ' +
-  'you your about tell please hi hello hey'
-).split(' '));
+export const DEFAULT_KNOWLEDGE_URL = '/petfolio-knowledge.json';
 
-/** lowercase words, light plural stemming, stopwords removed */
-export function tokenize(text) {
-  const words = String(text).toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) || [];
-  const out = [];
-  for (let w of words) {
-    if (w.length < 2 || STOPWORDS.has(w)) continue;
-    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1);
-    out.push(w);
-  }
-  return out;
-}
+// Keep in sync with petfolio-cli (src/build.js) — it refuses to write bigger files.
+export const MAX_CONTENT_CHARS = 20000;
+export const MAX_PERSONALITY_CHARS = 2000;
 
-/** Accept the CLI array, `{ entries: [...] }`, or a plain string. */
-export function normalizeKnowledge(raw) {
-  let list = raw;
-  if (typeof raw === 'string') list = [{ source: 'knowledge', content: raw }];
-  else if (raw && !Array.isArray(raw) && Array.isArray(raw.entries)) list = raw.entries;
-  if (!Array.isArray(list)) return [];
-  return list
-    .filter((e) => e && typeof e.content === 'string' && e.content.trim())
-    .map((e) => ({ source: String(e.source ?? 'knowledge'), content: e.content.trim() }));
-}
+const EMPTY = Object.freeze({ content: '', personality: '', topics: [], truncated: false });
 
-/** Pack sentences into chunks of at most `size` chars (long sentences are hard-split). */
-export function chunkText(text, size = 500) {
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  const chunks = [];
-  let cur = '';
-  const push = () => { if (cur.trim()) chunks.push(cur.trim()); cur = ''; };
-  for (const s of sentences) {
-    if (s.length > size) {
-      push();
-      for (let i = 0; i < s.length; i += size) chunks.push(s.slice(i, i + size));
-    } else if ((cur + ' ' + s).length > size) {
-      push();
-      cur = s;
-    } else {
-      cur = cur ? cur + ' ' + s : s;
-    }
-  }
-  push();
-  return chunks;
-}
-
-export class KnowledgeIndex {
-  /** @param {{source:string, content:string}[]} entries */
-  constructor(entries, { chunkSize = 500 } = {}) {
-    this.chunks = [];
-    for (const e of normalizeKnowledge(entries)) {
-      const pathTerms = new Set(tokenize(e.source.replace(/[/\\._-]+/g, ' ')));
-      chunkText(e.content, chunkSize).forEach((text, i) => {
-        const tf = new Map();
-        for (const t of tokenize(text)) tf.set(t, (tf.get(t) || 0) + 1);
-        this.chunks.push({ source: e.source, text, tf, pathTerms, first: i === 0 });
-      });
-    }
-    // document frequency for IDF
-    this.df = new Map();
-    for (const c of this.chunks) for (const t of c.tf.keys()) this.df.set(t, (this.df.get(t) || 0) + 1);
-  }
-
-  get size() { return this.chunks.length; }
-
-  idf(term) {
-    return Math.log(1 + this.chunks.length / (1 + (this.df.get(term) || 0)));
-  }
-
-  /**
-   * Best chunks for a question.
-   * @returns {{source:string, text:string, score:number}[]}
-   */
-  search(query, { limit = 5, maxChars = 3000 } = {}) {
-    const terms = [...new Set(tokenize(query))];
-    const scored = [];
-    for (const c of this.chunks) {
-      let score = 0;
-      for (const t of terms) {
-        const f = c.tf.get(t) || 0;
-        if (f) score += (f / (f + 1.2)) * this.idf(t);
-        if (c.pathTerms.has(t)) score += 0.5 * this.idf(t);
-      }
-      if (score > 0) scored.push({ source: c.source, text: c.text, score });
-    }
-    scored.sort((a, b) => b.score - a.score);
-
-    let picked = scored;
-    if (!picked.length) {
-      // Generic question ("who are you?", "hi"): give a short overview —
-      // the opening chunk of up to `limit` different files.
-      const seen = new Set();
-      picked = this.chunks
-        .filter((c) => c.first && !seen.has(c.source) && seen.add(c.source))
-        .map((c) => ({ source: c.source, text: c.text, score: 0 }));
-    }
-
-    const out = [];
-    let used = 0;
-    for (const c of picked) {
-      if (out.length >= limit) break;
-      if (used + c.text.length > maxChars && out.length) continue;
-      out.push(c);
-      used += c.text.length;
-    }
-    return out;
-  }
+/** `sections` → the text sent to the model. Keep in sync with petfolio-cli (src/build.js, formatSections). */
+export function formatSections(sections) {
+  return sections.map((s) => `## ${s.title}\n${s.text}`).join('\n\n');
 }
 
 /**
- * Resolve the `knowledge` option: a URL, an inline array/object/string,
- * or a ready KnowledgeIndex. A missing/broken file yields an empty index.
+ * Accept the CLI's object (`sections`), an object with a plain `content` string, or a plain
+ * string. Anything else — including the old array format — gives an empty result.
+ * @returns {{content:string, personality:string, topics:string[], truncated:boolean}}
  */
-export async function loadKnowledge(source, fetchImpl = globalThis.fetch) {
-  if (source instanceof KnowledgeIndex) return source;
-  const isUrl = typeof source === 'string' && /^(\/|\.|https?:)/.test(source);
-  if (!isUrl) return new KnowledgeIndex(normalizeKnowledge(source));
+export function normalizeKnowledge(raw) {
+  const o = typeof raw === 'string' ? { content: raw } : raw;
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return { ...EMPTY, topics: [] };
+  const text = (v) => (typeof v === 'string' ? v.trim() : '');
+
+  const sections = Array.isArray(o.sections)
+    ? o.sections
+        .map((s) => ({ title: text(s?.title), text: text(s?.text) }))
+        .filter((s) => s.title && s.text)
+    : [];
+  const content = sections.length ? formatSections(sections) : text(o.content);
+  const personality = text(o.personality);
+  return {
+    content: content.slice(0, MAX_CONTENT_CHARS),
+    personality: personality.slice(0, MAX_PERSONALITY_CHARS),
+    topics: [...new Set(sections.map((s) => s.title))],
+    truncated: content.length > MAX_CONTENT_CHARS || personality.length > MAX_PERSONALITY_CHARS,
+  };
+}
+
+/** A URL or path — as opposed to the knowledge text itself (which has spaces / newlines). */
+const looksLikeUrl = (s) => typeof s === 'string' && /^(\/|\.\.?\/|https?:\/\/)\S*$/.test(s);
+
+/**
+ * Resolve the `knowledge` option: a URL (default `/petfolio-knowledge.json`),
+ * or the data itself. A missing or broken file yields empty knowledge plus
+ * `loadError`, so the caller can warn the developer and retry later.
+ */
+export async function loadKnowledge(source = DEFAULT_KNOWLEDGE_URL, fetchImpl = globalThis.fetch) {
+  if (!looksLikeUrl(source)) return normalizeKnowledge(source);
   try {
-    const res = await fetchImpl(source);
+    // no-cache = always revalidate (a cheap 304), so a redeploy is picked up on the next page load
+    const res = await fetchImpl(source, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return new KnowledgeIndex(normalizeKnowledge(await res.json()));
+    return normalizeKnowledge(await res.json());
   } catch (err) {
-    const idx = new KnowledgeIndex([]);
-    idx.loadError = err;
-    return idx;
+    return { ...EMPTY, topics: [], loadError: err };
   }
 }

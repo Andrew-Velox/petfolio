@@ -1,7 +1,23 @@
+/** The contents of petfolio-knowledge.json. */
+export interface PetfolioKnowledge {
+  /** Format version written by petfolio-cli. */
+  version?: number;
+  /** Titled sections of facts, as written by petfolio-cli (together max 20,000 characters). */
+  sections?: Array<{ title: string; text: string }>;
+  /** Alternative to `sections` for inline use: one block of text. */
+  content?: string;
+  /** How the pet should sound (max 2,000 characters). Optional. */
+  personality?: string;
+}
+
 /** Options for the chat's AI connection. */
 export interface PetfolioAiOptions {
-  /** URL of the knowledge base JSON (or the data itself). Default `/petfolio-knowledgeBase.json`. */
-  knowledge?: string | Array<{ source: string; content: string }>;
+  /**
+   * Where the pet reads what it knows: the URL of the file `npx petfolio-cli about-me.txt` writes
+   * (default `/petfolio-knowledge.json`), or the data itself: `{ sections, personality? }`, `{ content, personality? }` or a plain string.
+   * All of it is sent with every question.
+   */
+  knowledge?: string | PetfolioKnowledge;
   /**
    * URL of YOUR server route that adds the API key and forwards the request to the
    * provider (recommended: the key never reaches the browser).

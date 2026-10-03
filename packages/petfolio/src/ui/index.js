@@ -4,7 +4,7 @@
  *     [ avatar ] [ chat ] [ settings ] [ exit ]
  *
  *   avatar    pick another character
- *   chat      ask the pet about the site (AI + petfolio knowledge base)
+ *   chat      ask the pet about the site (AI + the text from petfolio-cli)
  *   settings  reserved — wire it up with `ui.onSettings`
  *   exit      the pet walks off and peeks in from the corner;
  *             click the peeking pet to call it back

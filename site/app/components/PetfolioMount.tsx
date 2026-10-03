@@ -25,7 +25,7 @@ export default function PetfolioMount() {
       pet = Petfolio.summon({
         name: "Petfolio",
         chat: Boolean(ENDPOINT),
-        ai: { endpoint: ENDPOINT || undefined, knowledge: `${BASE}/petfolio-knowledgeBase.json` },
+        ai: { endpoint: ENDPOINT || undefined, knowledge: `${BASE}/petfolio-knowledge.json` },
         suggestions: ["What is Petfolio?", "How do I install it?", "Is it free?"],
       });
     });

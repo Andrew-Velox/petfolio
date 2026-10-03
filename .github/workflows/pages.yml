@@ -2,7 +2,8 @@
 #
 # One-time setup: repo → Settings → Pages → Build and deployment → Source: "GitHub Actions".
 # Optional repo variables (Settings → Secrets and variables → Actions → Variables):
-#   PETFOLIO_ENDPOINT   full URL of a deployed /api/petfolio route; leave empty to hide the chat
+#   PETFOLIO_ENDPOINT   address of the chat server (the Cloudflare Worker in ./worker, or a deployed
+#                       /api/petfolio route elsewhere); leave empty to hide the chat button
 #   BASE_PATH           override the URL prefix (default "/<repo name>"; use "/" for a custom domain or a <user>.github.io repo)
 name: Deploy site to GitHub Pages
 
@@ -40,8 +41,10 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
 
+      # `npm install`, not `npm ci`: it still works if package-lock.json lags behind a freshly published
+      # petfolio release (run `npm install` in site/ and commit the lock when you want exact pins).
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       # GitHub Pages is static: server routes can't run there (and break `output: export`).
       - name: Remove server-only routes

@@ -1,125 +1,100 @@
 #!/usr/bin/env node
 
-import fs from 'fs';
-import path from 'path';
-import inquirer from 'inquirer';
-import { scanDirectory } from '../src/scanner.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { buildKnowledge, estimateTokens, KnowledgeError, OUTPUT_FILE } from '../src/build.js';
 
 const HELP = `
-petfolio-cli — index your project's text for the Petfolio chat
+petfolio-cli — turn a text file about you into the knowledge your Petfolio pet answers from
 
 Usage
-  npx petfolio-cli                 interactive: asks for an AI provider + key (saved to .env),
-                                   then writes public/petfolio-knowledgeBase.json
-  npx petfolio-cli --scan-only     no prompts, no .env changes — just regenerate the knowledge
-                                   base (use this in package.json "prebuild" / CI)
+  npx petfolio-cli <file> [--out <dir>]
 
-Options
-  --out <dir>    where to write petfolio-knowledgeBase.json (default: public)
+  <file>         a plain-text or Markdown file with your background, projects, FAQ …
+                 (put the pet's personality under a "# Personality" heading — optional)
+  --out <dir>    where to write ${OUTPUT_FILE} (default: public)
                  e.g. --out static (SvelteKit), --out src/assets (Angular)
+  -v, --version  print the version
   -h, --help     show this help
+
+Example
+  npx petfolio-cli about-me.txt
 `;
 
+const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const NOT_TEXT = new Set(['.pdf', '.doc', '.docx', '.rtf', '.odt', '.pages']);
+
+function usageError(message) {
+  console.error(`${message}\n${HELP}`);
+  process.exit(2);
+}
+
+function fail(message) {
+  console.error(`petfolio-cli: ${message}`);
+  process.exit(1);
+}
+
 function parseArgs(argv) {
-    const args = { scanOnly: false, out: 'public', help: false };
-    for (let i = 0; i < argv.length; i++) {
-        const a = argv[i];
-        if (a === '--scan-only' || a === '--ci') args.scanOnly = true;
-        else if (a === '-h' || a === '--help') args.help = true;
-        else if (a === '--out') args.out = argv[++i];
-        else if (a.startsWith('--out=')) args.out = a.slice('--out='.length);
-        else { console.error(`Unknown option: ${a}\n${HELP}`); process.exit(2); }
+  const args = { file: null, out: 'public' };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '-h' || a === '--help') { console.log(HELP); process.exit(0); }
+    else if (a === '-v' || a === '--version') {
+      console.log(JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8')).version);
+      process.exit(0);
     }
-    if (!args.out) { console.error(`--out needs a directory\n${HELP}`); process.exit(2); }
-    return args;
+    else if (a === '--out') args.out = argv[++i];
+    else if (a.startsWith('--out=')) args.out = a.slice('--out='.length);
+    else if (a.startsWith('-')) usageError(`Unknown option: ${a}`);
+    else if (args.file) usageError(`Only one input file is supported (got "${args.file}" and "${a}").`);
+    else args.file = a;
+  }
+  if (!args.file) usageError('Missing the input file.');
+  if (!args.out) usageError('--out needs a directory.');
+  return args;
 }
 
-/** True when the project's .gitignore already covers .env (so the key will not be committed). */
-function envIsIgnored(rootDir) {
-    try {
-        const lines = fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf-8').split('\n').map((l) => l.trim());
-        return lines.some((l) => ['.env', '.env*', '*.env', '/.env', '.env.*'].includes(l));
-    } catch {
-        return false;
-    }
+function readInput(file) {
+  const ext = path.extname(file).toLowerCase();
+  if (NOT_TEXT.has(ext)) fail(`${file} is not plain text. Save it as .txt or .md and run again.`);
+  try {
+    return fs.readFileSync(file, 'utf-8');
+  } catch (err) {
+    if (err.code === 'ENOENT') fail(`File not found: ${file}`);
+    if (err.code === 'EISDIR') fail(`${file} is a folder — pass a single text file (e.g. about-me.txt).`);
+    fail(`Could not read ${file}: ${err.message}`);
+  }
 }
 
-async function askForKey(rootDir) {
-    const answers = await inquirer.prompt([
-        {
-            type: 'select',
-            name: 'provider',
-            message: 'Select your AI inference provider:',
-            choices: ['Groq (Recommended - Fast & Free tier)', 'Google Gemini (Free tier)'],
-        },
-        {
-            type: 'password',
-            name: 'apiKey',
-            message: 'Enter your API key:',
-            mask: '*',
-            validate: (input) => (input.trim() ? true : 'API key cannot be empty.'),
-        },
-    ]);
+function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const cwd = process.cwd();
+  const input = path.resolve(cwd, args.file);
 
-    const envPath = path.join(rootDir, '.env');
-    const envKey = answers.provider.includes('Groq') ? 'PETFOLIO_GROQ_API_KEY' : 'PETFOLIO_GEMINI_API_KEY';
+  let result;
+  try {
+    result = buildKnowledge(readInput(input));
+  } catch (err) {
+    if (err instanceof KnowledgeError) fail(err.message);
+    throw err;
+  }
 
-    // Read existing content (if any) and replace just our key line.
-    // Never blindly overwrite the whole file — user's other vars would be lost.
-    const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-    const lines = existing.split('\n').filter((line) => !line.trim().startsWith(envKey + '='));
-    const kept = lines.join('\n').replace(/\s+$/, '');
-    const updated = (kept ? kept + '\n' : '') + `${envKey}="${answers.apiKey.trim()}"\n`;
-    fs.writeFileSync(envPath, updated, 'utf-8');
+  const outPath = path.join(path.resolve(cwd, args.out), OUTPUT_FILE);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, JSON.stringify(result.knowledge, null, 2) + '\n', 'utf-8');
 
-    console.log(`API key saved to ${envPath}`);
-    if (!envIsIgnored(rootDir)) {
-        console.warn('WARNING: .env is not listed in your .gitignore — add it so the key is never committed.');
-    }
-    return envKey;
+  const { contentChars, personalityChars, sections } = result.stats;
+  const rel = (p) => path.relative(cwd, p) || '.';
+  const titles = result.knowledge.sections.map((x) => x.title);
+  console.log(`petfolio-cli: ${rel(input)} -> ${rel(outPath)}`);
+  console.log(`  facts        ${contentChars.toLocaleString('en-US')} characters (about ${estimateTokens('x'.repeat(contentChars)).toLocaleString('en-US')} tokens per question)`);
+  console.log(`  sections     ${sections}: ${titles.slice(0, 8).join(' | ')}${titles.length > 8 ? ' | …' : ''}`);
+  console.log(personalityChars
+    ? `  personality  ${personalityChars.toLocaleString('en-US')} characters`
+    : '  personality  none (add a "# Personality" section to give the pet a voice)');
+  for (const w of result.warnings) console.warn(`WARNING: ${w}`);
+  console.log(`Note: ${OUTPUT_FILE} is served publicly — visitors can read everything in it.`);
 }
 
-async function main() {
-    const args = parseArgs(process.argv.slice(2));
-    if (args.help) { console.log(HELP); return; }
-
-    console.log('initializing Petfolio CLI...!');
-    const rootDir = process.cwd();
-    const outDir = path.resolve(rootDir, args.out);
-
-    const envKey = args.scanOnly ? 'PETFOLIO_GROQ_API_KEY' : await askForKey(rootDir);
-
-    console.log('Scanning project directory for relevant files...');
-    const knowledgeBase = scanDirectory(rootDir);
-
-    fs.mkdirSync(outDir, { recursive: true });
-    const outputPath = path.join(outDir, 'petfolio-knowledgeBase.json');
-    fs.writeFileSync(outputPath, JSON.stringify(knowledgeBase, null, 2), 'utf-8');
-
-    console.log(`Knowledge base generated and saved to ${outputPath}`);
-    console.log(`Indexed ${knowledgeBase.length} file(s).`);
-    if (knowledgeBase.length === 0) {
-        console.warn('Nothing to index. The CLI reads .js/.jsx/.ts/.tsx/.md/.mdx/.txt files — add an about.md describing your site/portfolio.');
-    }
-
-    if (!args.scanOnly) {
-        console.log(`
-Next steps
-  1. Serve the knowledge base from your site root as /petfolio-knowledgeBase.json
-     (it is in ${path.relative(rootDir, outDir) || '.'}/ — pass ai.knowledge if you serve it elsewhere).
-  2. Keep your API key private: add a small server route that reads ${envKey} from .env and
-     forwards chat requests to the provider, then pass its URL to the widget:
-         Petfolio.summon({ ai: { endpoint: '/api/petfolio' } })
-     (example route in the Petfolio README, "AI chat").
-  3. Quick local test only: skip the route and paste the key into the chat panel — never ship that.
-  Tip: richer answers come from prose — put facts about you / your site in an about.md.
-       Re-run \`npx petfolio-cli --scan-only\` whenever your content changes (e.g. in "prebuild").
-`);
-        console.log('Petfolio CLI setup complete!');
-    }
-}
-
-main().catch((error) => {
-    console.error('\n initialization failed:', error);
-    process.exit(1);
-});
+main();

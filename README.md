@@ -10,7 +10,7 @@ questions about your site**.
 - **Moves like the original Shimeji** — the engine is a port of Shimeji's action/behaviour system.
 - **Never gets in the way** — the pet's canvas is click-through; your page's links, buttons, text selection
   and scrolling keep working. Only the pet's visible pixels catch the mouse.
-- **Chats about your site** — answers only from *your* content (built by `petfolio-cli`), via your own server
+- **Chats about your site** — answers only from a text file *you* write (`npx petfolio-cli about-me.txt`), via your own server
   route so the API key never reaches the browser.
 
 ---
@@ -38,7 +38,7 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 </script>
 ```
 
-> Pin a version in production: `https://unpkg.com/petfolio@1.2.0`.
+> Pin a version in production: `https://unpkg.com/petfolio@2.0.0`.
 
 ### React / Next.js
 
@@ -166,71 +166,125 @@ to change the lines and the timing.
 
 ## AI chat
 
-Visitors open the chat from the menu and ask about your site. The pet answers **only from your own content**
-and says "I don't know" otherwise. For each question the browser picks the few most relevant snippets of your
-knowledge base (keyword/TF·IDF search, no embeddings), sends them with the last few messages to the model, and
-shows the answer. Free tiers (Groq `llama-3.1-8b-instant` by default; Gemini also works) are plenty.
+Visitors open the chat from the menu and ask about you or your site. The pet answers **only from a text file you
+write** and says "I don't know" otherwise. There is no database, no embeddings and nothing to host: the text is
+read once, kept in the browser's memory, and sent along with every question ("context stuffing").
 
 ```
- browser ──question──▶ your server route (/api/petfolio) ──adds secret key──▶ Groq / Gemini
-    ▲  knowledge base (public JSON, searched in the browser)                         │
-    └─────────────────────────────────── answer ◀────────────────────────────────────┘
+ about-me.txt ──npx petfolio-cli──▶ public/petfolio-knowledge.json
+                                        │  fetched once when the page loads
+ visitor's question + the whole text ───┴──▶ your server route ──adds the secret key──▶ Groq / Gemini
+        ▲                                     (/api/petfolio)                                │
+        └──────────────────────────────────────── answer ◀───────────────────────────────────┘
 ```
 
-### Step 1 — build the knowledge base
+### Step 1 — write one text file
+
+Anywhere in your project — `about-me.txt`, `content/about.md`, whatever you like. Plain text or Markdown:
+
+```md
+# About me
+I'm Alex, a full-stack developer in Lisbon. I build web apps with TypeScript and Rust.
+
+## Projects
+- Petfolio — a Shimeji-style pet for websites.
+- Mocap RS — a motion-capture tool written in Rust.
+
+## Contact
+Email alex@example.com. I usually reply within two days.
+
+## Personality
+Cheerful and a little shy. Speak in the first person and add a tiny emoji now and then.
+```
+
+- **Facts:** background, resume, projects, FAQ, how to contact you — whatever visitors ask about. Write full
+  sentences; the model reads it like a person would.
+- **Use headings.** Each heading becomes a titled section, and the AI uses the titles to find the right topic
+  (`Contact` for "how do I reach you?"). Nested headings become `Projects > Petfolio`. Text before the first
+  heading is the `About` section. Name headings after what visitors ask about.
+- **Say it once, plainly.** Put names, dates, prices and links in the text exactly as they should be quoted.
+  The pet is told to copy them verbatim and to say "I don't know" rather than guess.
+- **Private notes:** `<!-- anything in an HTML comment -->` is dropped and never reaches the output.
+- **Personality (optional):** put the pet's voice under a heading named `Personality` (or `Persona`), at any
+  heading level. It runs until the next heading of the same or a higher level. It shapes the *tone*; it can't
+  override the rule "answer only from the facts".
+- **Keep it short.** All of it is sent with every question. Aim for under ~8,000 characters (about 2,000
+  tokens); the CLI refuses more than 20,000. Free AI tiers limit tokens per minute, so shorter text means
+  more questions per minute.
+- **It is public.** The knowledge file is served from your site, so anyone can read it. Write only what you
+  are happy to publish — never passwords or keys (the CLI warns if the text looks like a key).
+
+### Step 2 — turn it into the knowledge file
 
 ```bash
 npm install -D petfolio-cli
-npx petfolio-cli
+npx petfolio-cli about-me.txt                    # → public/petfolio-knowledge.json
+npx petfolio-cli about-me.txt --out static       # elsewhere (SvelteKit: static, Angular: src/assets, …)
 ```
 
-It asks for a provider and API key (saved to `.env` — **make sure `.env` is in your `.gitignore`**; the CLI
-warns you if it isn't) and scans your project for human-readable text, writing
-`public/petfolio-knowledgeBase.json`.
-
-What it reads: string literals and JSX text in `.js/.jsx/.ts/.tsx`, plus **`.md`, `.mdx` and `.txt` files**.
-It skips `node_modules`, build output, tests, config files, `api/` routes and the root `README.md`.
-
-> **Teach the pet with prose.** Code gives it little to work with. The best knowledge base is a Markdown file
-> about your site — who you are, what you do, projects, how to contact you, FAQs. Put it anywhere (e.g.
-> `content/about.md`) and re-run the CLI.
-
-Options (non-interactive, for CI and `package.json` scripts):
-
-```bash
-npx petfolio-cli --scan-only          # regenerate the knowledge base only: no prompts, .env untouched
-npx petfolio-cli --out static         # write elsewhere (SvelteKit: static, Angular: src/assets, …)
+```
+petfolio-cli: about-me.txt -> public/petfolio-knowledge.json
+  facts        1,204 characters (about 301 tokens per question)
+  sections     4: About me | Projects | Contact | …
+  personality  96 characters
 ```
 
-Keep it fresh automatically:
+The result is a small, readable JSON file — one titled section per heading, with Markdown clutter (`**bold**`,
+backticks, `[links](…)` → `links (…)`, images, rules) cleaned out so the model reads plain sentences. Same
+input gives the same bytes, so it diffs cleanly in git:
 
 ```json
-{ "scripts": { "kb": "petfolio-cli --scan-only", "prebuild": "npm run kb" } }
+{
+  "version": 2,
+  "sections": [
+    { "title": "About me", "text": "I'm Alex, a full-stack developer in Lisbon. …" },
+    { "title": "Projects", "text": "- Petfolio — a Shimeji-style pet for websites.\n- Mocap RS — …" },
+    { "title": "Contact", "text": "Email alex@example.com. I usually reply within two days." }
+  ],
+  "personality": "Cheerful and a little shy. …"
+}
 ```
 
-> The file is generated, so `**/public/petfolio-knowledgeBase.json` is git-ignored in this repo. Regenerating
-> it in `prebuild` is what makes deployments (Vercel, Netlify, …) work.
+Check the `sections` line the CLI prints: if a section you expected is missing or merged into another, fix
+your headings. The widget sends the pet's rules, the list of topics, the personality and all sections with each
+question.
 
-### Step 2 — add a server route that holds the key
+Run it again whenever you edit the text. To do that automatically on every build (so deployments on Vercel,
+Netlify, GitHub Actions … stay current), or just commit the generated file:
 
-**Never put an API key in browser code** — anyone can read it. Add a small route that adds the key (the
-`PETFOLIO_GROQ_API_KEY` / `PETFOLIO_GEMINI_API_KEY` the CLI wrote to `.env`) and forwards the request. Make the
-route choose the model and limits, so it can't be used as a free general-purpose LLM proxy.
+```json
+{ "scripts": { "kb": "petfolio-cli about-me.txt", "prebuild": "npm run kb", "predev": "npm run kb" } }
+```
+
+The CLI has no dependencies and never touches your other files. It exits with an error (and writes nothing) for
+a missing, empty, binary (`.pdf`, `.docx` …) or too-long file.
+
+### Step 3 — add a server route that holds the key
+
+**Never put an API key in browser code** — anyone can read it. Get a free key (Groq: <https://console.groq.com/keys>,
+Gemini: <https://aistudio.google.com/apikey>), put it in a git-ignored `.env`:
+
+```bash
+PETFOLIO_GROQ_API_KEY=gsk_your_key_here        # or PETFOLIO_GEMINI_API_KEY=…
+```
+
+and add a small route that adds it to the request and forwards it. Make the route choose the model and limits,
+so it can't be used as a free general-purpose LLM proxy.
 
 **Next.js (App Router)** — `app/api/petfolio/route.ts` (a complete version with validation, a same-origin
-check and rate limiting lives in [`site/app/api/petfolio/route.ts`](site/app/api/petfolio/route.ts)):
+check, size limits and rate limiting lives in [`site/app/api/petfolio/route.ts`](site/app/api/petfolio/route.ts)):
 
 ```ts
 export async function POST(req: Request) {
   const { messages } = await req.json().catch(() => ({}));
   const ok = Array.isArray(messages) && messages.length > 0 && messages.length <= 12 &&
-    messages.every((m) => ["system", "user", "assistant"].includes(m?.role) && typeof m?.content === "string");
+    messages.every((m) => ["system", "user", "assistant"].includes(m?.role) && typeof m?.content === "string" && m.content.length <= 26_000);
   if (!ok) return Response.json({ error: "bad request" }, { status: 400 });
 
   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.PETFOLIO_GROQ_API_KEY}` },
-    body: JSON.stringify({ model: "llama-3.1-8b-instant", messages, temperature: 0.3, max_tokens: 350 }),
+    body: JSON.stringify({ model: "qwen/qwen3.8-27b", messages, temperature: 0.3, max_tokens: 350 }),
   });
   return Response.json(await r.json(), { status: r.ok ? 200 : 502 });
 }
@@ -239,13 +293,13 @@ export async function POST(req: Request) {
 **Express / any Node server**
 
 ```js
-app.post('/api/petfolio', express.json({ limit: '50kb' }), async (req, res) => {
+app.post('/api/petfolio', express.json({ limit: '150kb' }), async (req, res) => {
   const { messages } = req.body ?? {};
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > 12) return res.status(400).end();
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.PETFOLIO_GROQ_API_KEY}` },
-    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages, temperature: 0.3, max_tokens: 350 }),
+    body: JSON.stringify({ model: 'qwen/qwen3.8-27b', messages, temperature: 0.3, max_tokens: 350 }),
   });
   res.status(r.ok ? 200 : 502).json(await r.json());
 });
@@ -255,18 +309,27 @@ app.post('/api/petfolio', express.json({ limit: '50kb' }), async (req, res) => {
 `gemini-2.0-flash`, and `PETFOLIO_GEMINI_API_KEY`. The browser sends a default model name, but your route
 decides the model — it is the one place to change it.
 
-The route must answer with the provider's normal JSON (`{ "choices": [{ "message": { "content": "…" } }] }`).
-Add rate limiting if the site is public (the example in `site/` limits per IP in memory — use a shared store
-such as Redis/Upstash on serverless platforms).
+**Models get retired.** Providers rename and remove free models from time to time (`llama-3.1-8b-instant` on Groq
+is gone). When chat suddenly fails with a 502, the route's server log says `model_not_found` — pick a current
+model from <https://console.groq.com/docs/models>. The `site/` route reads it from an environment variable, so
+it is a settings change, not a code change: `PETFOLIO_MODEL=openai/gpt-oss-20b`.
 
-### Step 3 — point the widget at it
+The route must answer with the provider's normal JSON (`{ "choices": [{ "message": { "content": "…" } }] }`).
+
+Because the browser sends the text, the route can't check that it is *your* text — so treat it as a small public
+service and keep it cheap to abuse: fix the model and `max_tokens` in the route, cap the message sizes (the
+`site/` route allows one system message up to 26,000 characters and visitor/assistant messages up to 2,000), check
+the `Origin`, and rate-limit per IP (the example limits in memory — use a shared store such as Redis/Upstash on
+serverless platforms).
+
+### Step 4 — point the widget at it
 
 ```js
 Petfolio.summon({
   name: 'Mishi',
   ai: {
     endpoint: '/api/petfolio',                  // your route (key stays on the server)
-    knowledge: '/petfolio-knowledgeBase.json',  // default; change if you used --out
+    knowledge: '/petfolio-knowledge.json',      // default; change it if you used --out
   },
 });
 ```
@@ -274,22 +337,34 @@ Petfolio.summon({
 | `ai` option | Meaning |
 |---|---|
 | `endpoint` | Your server route. **Recommended.** |
-| `knowledge` | URL of the knowledge base JSON (or the data itself). Default `/petfolio-knowledgeBase.json`. |
+| `knowledge` | URL of the file the CLI wrote (default `/petfolio-knowledge.json`), or the data itself: `{ sections, personality }`, `{ content, personality }` or a plain string. |
 | `apiKey` | Direct mode — **local testing only**: the key is visible to anyone using the page. |
 | `provider` / `model` | `'groq'` (default) or `'gemini'`; override the model name (direct mode). |
 
 **Quick local test without a route:** omit `endpoint`, open the chat and paste a key (or pass `ai: { apiKey }`).
 It is kept in that browser's `localStorage`. Never ship this.
 
+### Upgrading from 1.x
+
+1. `npm i petfolio@2` and `npm i -D petfolio-cli@2`.
+2. Write your text file (Step 1) and run `npx petfolio-cli about-me.txt`. Delete the old
+   `public/petfolio-knowledgeBase.json`, and change any `petfolio-cli --scan-only` script to
+   `petfolio-cli about-me.txt`.
+3. The CLI no longer asks for or saves your API key — keep it in `.env` yourself (Step 3).
+4. **Update your server route's size limits.** The browser now sends the whole text, up to about 25,000
+   characters per request. A route that rejects bodies over a few KB (for example `express.json({ limit: '50kb' })`
+   or a 12,000-character cap) will answer 400 — use the limits from Step 3 / `site/app/api/petfolio/route.ts`.
+
 ### Troubleshooting the chat
 
 | Symptom | Likely cause |
 |---|---|
-| "The AI service returned an error (502)" | Your route got a rejected key or a provider error. Check `.env` has a valid `PETFOLIO_GROQ_API_KEY` (re-run `npx petfolio-cli`) and restart the server. |
-| "Too many questions right now" | The provider's or your route's rate limit (429). |
-| "I don't know" for things you wrote | The knowledge base is stale or thin. Re-run `npx petfolio-cli --scan-only`, add an `about.md`. |
+| "The AI service returned an error (502)" | Your route got a rejected key or a provider error — **look at the terminal running the server**: the route logs the provider's real reason (`[petfolio] <model> -> HTTP 404: model_not_found` = retired model, set `PETFOLIO_MODEL`; HTTP 401 = bad key). Also check that `.env` has a valid `PETFOLIO_GROQ_API_KEY`, and restart the server after editing it. |
+| "Too many questions right now" | The provider's or your route's rate limit (429). If it happens after only a few questions, your text is long: it is re-sent with every question and uses up the free tier's tokens per minute — shorten it. |
+| "I don't know" for things you wrote | The file isn't being found (check the browser's Network tab for `/petfolio-knowledge.json`; the console says `[petfolio] Could not load the knowledge file …`), it is stale (re-run `npx petfolio-cli about-me.txt`), or the answer isn't written in it in plain sentences. |
 | Chat asks for an API key | `ai.endpoint` isn't set (the widget is in direct mode). |
-| Answers ignore new content | The browser cached the knowledge base — hard refresh, or regenerate it in `prebuild`. |
+| Answers ignore new content | Re-run the CLI and redeploy — the browser re-checks the file on every page load, so a hard refresh isn't needed. |
+| 400 from your route | The text exceeds your route's size limits (26,000 characters for the first message in `site/`). |
 
 ---
 
@@ -324,7 +399,11 @@ npm run dev              # sandbox with hot reload
 npm run build:lib        # dist/petfolio.mjs + .cjs + .global.js
 npm run inline-sprites   # regenerate the inlined sprite bundle (run after changing public/characters)
 node --test test/        # engine + AI tests (headless)
+cd ../petfolio-cli && npm test   # text file -> knowledge JSON, incl. the real binary
 ```
+
+The sandbox chat reads `public/petfolio-knowledge.json` (git-ignored): make one with
+`npx petfolio-cli ../../site/content/about.txt` from `packages/petfolio`.
 
 Adding an avatar: drop a folder of `shime1.png … shime46.png` (plus an optional `character.json` with a
 `displayName`) into `packages/petfolio/public/characters/<name>/` and run `npm run inline-sprites`.
@@ -337,20 +416,25 @@ Publishing (both packages): bump the versions, `npm login`, then `npm publish` i
 The landing page in [`site/`](site) deploys to **GitHub Pages** with the workflow in
 [`.github/workflows/pages.yml`](.github/workflows/pages.yml):
 
-1. Publish `petfolio` and `petfolio-cli` to npm first (the site installs them from npm), run `npm install` in
-   `site/` and commit the updated `package-lock.json`.
+1. Publish `petfolio` and `petfolio-cli` to npm first (the site installs them from npm).
 2. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Push to `main` (or run the workflow manually). The site goes live at `https://<user>.github.io/<repo>/`.
 
 Pages only serves static files, so the build is a static export and the `/api/petfolio` route is **left out**.
-By default the pet runs without the chat button. To keep the chat on Pages, deploy the site to a host that runs
-server code (e.g. Vercel, with `PETFOLIO_GROQ_API_KEY` set), then:
+Without a chat server the pet still works, just without the chat button. A secret key can't live in a static
+page, so the chat needs a small server somewhere. Pick one, then add the GitHub Actions **variable**
+`PETFOLIO_ENDPOINT` (Settings → Secrets and variables → Actions → *Variables*) with its address and re-run the
+Pages workflow:
 
-- on that server, set `PETFOLIO_ALLOWED_ORIGINS=https://<user>.github.io` (it accepts same-origin requests only otherwise);
-- in the GitHub repo (Settings → Secrets and variables → Actions → **Variables**), add
-  `PETFOLIO_ENDPOINT=https://<your-server>/api/petfolio`.
+- **Cloudflare Worker (recommended, free, no card)** — [`worker/`](worker) is a ready-made chat server and
+  [`.github/workflows/chat-worker.yml`](.github/workflows/chat-worker.yml) deploys it from GitHub: add three
+  repo *secrets* (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `PETFOLIO_GROQ_API_KEY`) and push. Step by
+  step: [`worker/README.md`](worker/README.md). `PETFOLIO_ENDPOINT` = `https://petfolio-chat.<you>.workers.dev`.
+- **Vercel (or any Node host)** — deploy `site/` (Root Directory `site`) with `PETFOLIO_GROQ_API_KEY` and
+  `PETFOLIO_ALLOWED_ORIGINS=https://<user>.github.io` (origin only: no path, no trailing slash).
+  `PETFOLIO_ENDPOINT` = `https://<project>.vercel.app/api/petfolio`.
 
-Custom domain or a `<user>.github.io` repo (site at the root)? Add the Actions variable `BASE_PATH` = `/`.
+Custom domain, or a `<user>.github.io` repo (site at the root)? Add the Actions variable `BASE_PATH` = `/`.
 
 ## Project structure
 
@@ -362,12 +446,13 @@ packages/
 │   │   ├── Petfolio.js      Pixi renderer + public API (25 fps fixed-step loop)
 │   │   ├── interaction.js   pointer → engine (click-through canvas, drag / throw / tap)
 │   │   ├── bubble.js, phrases.js, constants.js, textures.js
-│   │   ├── ai/              knowledge search + chat client (no DOM)
+│   │   ├── ai/              knowledge loader + chat client (no DOM)
 │   │   ├── ui/              icon menu, avatar picker, chat panel
 │   │   └── engine/          Shimeji engine port (no Pixi/DOM)
 │   ├── types/index.d.ts
 │   └── test/
-└── petfolio-cli/        ← knowledge-base generator (npm: petfolio-cli)
+└── petfolio-cli/        ← about-me.txt → public/petfolio-knowledge.json (npm: petfolio-cli)
+worker/                  ← chat server for Cloudflare Workers (holds the AI key for a static site)
 site/                    ← the Petfolio website (Next.js) — also a working example of everything above
 ```
 

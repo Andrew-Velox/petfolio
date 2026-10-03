@@ -46,8 +46,8 @@ const STEPS = [
   },
   {
     n: "2",
-    title: "Build its memory",
-    code: "npx petfolio-cli",
+    title: "Teach it about you",
+    code: "npx petfolio-cli about-me.txt",
   },
   {
     n: "3",
@@ -132,7 +132,7 @@ export default function Home() {
           {/* version badge: aligned with the wordmark's left edge */}
           <span className="rise mb-5 flex w-fit items-center gap-2 rounded-full border border-line bg-white/80 px-3.5 py-1.5 text-sm font-semibold text-muted">
             <span className="size-2 rounded-full bg-emerald-400" />
-            v1.2.0 · free & open source
+            v2.0.0 · free & open source
           </span>
           {/* font-size lives on this wrapper so avatar sizes/positions can use em */}
           <div className="relative" style={{ fontSize: "clamp(4.2rem, min(21vw, 30svh), 17rem)" }}>
@@ -186,7 +186,7 @@ export default function Home() {
           style={{ animationDelay: ".3s" }}
         >
           <CopyCommand command="npm install petfolio" />
-          <CopyCommand command="npx petfolio-cli" />
+          <CopyCommand command="npx petfolio-cli about-me.txt" />
         </div>
       </section>
 
