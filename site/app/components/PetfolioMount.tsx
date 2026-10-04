@@ -27,6 +27,9 @@ export default function PetfolioMount() {
         chat: Boolean(ENDPOINT),
         ai: { endpoint: ENDPOINT || undefined, knowledge: `${BASE}/petfolio-knowledge.json` },
         suggestions: ["What is Petfolio?", "How do I install it?", "Is it free?"],
+        // The pet walks on the page's headings, cards and paragraphs. It falls back to the
+        // classic floor-only movement on phones and unstable layouts by itself.
+        physics: "page",
       });
     });
 

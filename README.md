@@ -38,7 +38,7 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 </script>
 ```
 
-> Pin a version in production: `https://unpkg.com/petfolio@2.1.0`.
+> Pin a version in production: `https://unpkg.com/petfolio@2.1.1`.
 
 ### React / Next.js
 

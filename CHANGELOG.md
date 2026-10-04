@@ -3,6 +3,13 @@
 `petfolio` (the widget) and `petfolio-cli` were released together as 2.0.0. From 2.1 they are versioned
 independently: a release only bumps the package that changed.
 
+## petfolio 2.1.1
+
+### Fixed
+- Page physics ignored elements whose entrance animation had finished (a fade-in that holds its end state), so
+  a landing page's hero heading and text were never ledges. Only animations that are running count now, and a
+  transform that moves nothing (the identity matrix such an animation leaves behind) no longer disqualifies an element.
+
 ## petfolio 2.1.0
 
 ### Added

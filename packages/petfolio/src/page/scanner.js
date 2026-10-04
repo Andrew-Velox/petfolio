@@ -34,6 +34,14 @@ const MIN_INTERVAL_MS = 1000;    // never scan more often than this
 const MAX_WAIT_MS    = 2000;     // …and never wait longer than this, however busy the page keeps the observers
 const SCROLL_RESCAN   = 1.5;     // re-scan after scrolling this many viewport heights from the last scan
 
+const IDENTITY = /^matrix\(\s*1,\s*0,\s*0,\s*1,\s*0,\s*0\s*\)$|^matrix3d\(\s*1,\s*0,\s*0,\s*0,\s*0,\s*1,\s*0,\s*0,\s*0,\s*0,\s*1,\s*0,\s*0,\s*0,\s*0,\s*1\s*\)$/;
+/** A transform that moves nothing ('none', or the identity an entrance animation leaves behind). */
+const isStill = (t) => !t || t === 'none' || IDENTITY.test(t);
+
+/** Is something animating on `el` right now? (A finished animation that holds its end state is not movement.) */
+const animating = (el) => !!el.getAnimations
+  && el.getAnimations().some((a) => a.playState === 'running' || a.playState === 'pending');
+
 /** Never a platform, whatever the selectors say. */
 const isOurs = (el) => !!el.closest?.('.pf-ui, #petfolio-canvas, [data-petfolio-ignore]');
 
@@ -61,7 +69,7 @@ function context(el, memo) {
     && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1);
   const bad = parent.bad
     || cs.position === 'sticky'
-    || (cs.transform && cs.transform !== 'none')
+    || !isStill(cs.transform)
     || scroller;
   const result = { fixed, bad };
   memo.set(el, result);
@@ -116,7 +124,7 @@ function collect() {
     const ctx = context(el, memo);
     if (ctx.bad && !forced) continue;
     if (cs.position === 'sticky') continue;
-    if (el.getAnimations && el.getAnimations().length) continue;      // running animation / transition
+    if (animating(el)) continue;                                      // running animation / transition
 
     // Only the viewport-anchored header/nav kind may be fixed; any other fixed element (a toast,
     // a floating button) is not a surface.
