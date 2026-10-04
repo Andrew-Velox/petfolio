@@ -60,5 +60,29 @@ if (fs.existsSync(previewsDir)) {
   }
 }
 
+// The list on GitHub: avatars/README.md renders under the folder (previews are relative links to the repo's own PNGs)
+const site = 'https://andrew-velox.github.io/petfolio/avatars/';
+const esc = (t) => String(t).replace(/\|/g, '\\|');
+const rows = avatars.map((a) =>
+  `| ${esc(a.displayName)}${a.bundled ? ' *(built in)*' : ''} | ${esc(a.author || '—')} | <img src="${a.name}/shime1.png" alt="${esc(a.displayName)}" height="64"> | \`${a.name}\` |`);
+fs.writeFileSync(path.join(avatarsDir, 'README.md'), [
+  '# Avatars',
+  '',
+  `${avatars.length} avatars. Use one by name: \`Petfolio.summon({ character: 'finn' })\`.`,
+  `Browse them with live previews and copy buttons on the [Avatars page](${site}).`,
+  '',
+  '## List',
+  '',
+  '| Name | Author | Preview | Code name |',
+  '| --- | --- | --- | --- |',
+  ...rows,
+  '',
+  '## Add your own',
+  '',
+  'Add a folder `avatars/<name>/` with `avatar.json` and `shime1.png … shime46.png`, then open a pull request.',
+  'This list is generated (`cd site && npm run avatars`); do not edit it by hand.',
+  '',
+].join('\n'));
+
 fs.writeFileSync(outFile, JSON.stringify(avatars, null, 2) + '\n');
 console.log(`✓ ${avatars.length} avatar(s): ${avatars.map((a) => a.name).join(', ')}`);

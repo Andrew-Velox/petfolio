@@ -7,7 +7,7 @@ export const DEFAULT_PHRASES = [
   'You look great today ✨', 'Psst… I like you 💗', 'La la la~ 🎵', 'Snack time? 🍪',
   'Drink some water! 💧', 'Take a little break? ☕', 'Need a hug? 🤗', 'Stay curious! 🌟',
   'Be kind today 🌸', 'Look at me go!', 'So happy you\'re here!', 'Pet me! …please? 🥺',
-  'Wheee~!', 'Nyaa~ 😺', 'Believe in yourself! 🌈', 'Sparkle sparkle ✨', 'Tee hee!',
+  'Wheee~!', 'Nyaa~ 😺', 'I love Petfolio 🩷', 'Sparkle sparkle ✨', 'Tee hee!',
   'Don\'t forget to smile 😊', 'You\'re doing great!', 'Hello, friend! 👋', 'Cuteness overload 💖',
   'Time to stretch! 🧘', 'Let\'s have fun! 🎈', 'Hmm hmm hmm~ 🎶', 'Best day ever!',
 ];

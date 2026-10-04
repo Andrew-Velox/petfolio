@@ -33,8 +33,30 @@
     ]
   },
   {
+    "name": "grim",
+    "displayName": "Grim",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
     "name": "homura",
     "displayName": "Homura",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "jayfeather",
+    "displayName": "Jayfeather",
     "author": "unknown",
     "bundled": false,
     "frames": [
@@ -77,8 +99,41 @@
     ]
   },
   {
+    "name": "pathfinder",
+    "displayName": "Pathfinder",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pebbles",
+    "displayName": "Pebbles",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
     "name": "pikachu",
     "displayName": "Pikachu",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "po3",
+    "displayName": "Po3",
     "author": "unknown",
     "bundled": false,
     "frames": [
@@ -143,6 +198,17 @@
     ]
   },
   {
+    "name": "sakurai",
+    "displayName": "Sakurai",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
     "name": "shiro",
     "displayName": "Shiro",
     "author": "unknown",
@@ -156,6 +222,17 @@
   {
     "name": "spongebob",
     "displayName": "SpongeBob",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "wheatley",
+    "displayName": "Wheatley",
     "author": "unknown",
     "bundled": false,
     "frames": [
