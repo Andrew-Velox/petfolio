@@ -46,16 +46,17 @@ export function createChat({ client, name = 'Petfolio', suggestions = DEFAULT_SU
   root.setAttribute('aria-label', `Chat with ${name}`);
 
   const head   = el('div', 'pf-chat-head');
-  const avatar = el('div', 'pf-chat-avatar', (name.trim()[0] || 'P').toUpperCase());
+  const spark  = el('span', 'pf-chat-spark');
+  spark.innerHTML = ICONS.sparkle;             // static, trusted markup
   const who    = el('div', 'pf-chat-who');
   const title  = el('div', 'pf-chat-title', name);
   const status = el('div', 'pf-chat-status');
-  const statusText = el('span', '', 'Online');
+  const statusText = el('span', '', 'Ready');
   status.append(el('span', 'pf-dot'), statusText);
   who.append(title, status);
   const reset = iconButton('pf-chat-icon', 'reset', 'New conversation');
   const close = iconButton('pf-chat-icon pf-chat-close', 'close', 'Close chat');
-  head.append(avatar, who, reset, close);
+  head.append(spark, who, reset, close);
 
   const setup = el('div', 'pf-setup');
   const log   = el('div', 'pf-chat-log');
@@ -96,7 +97,7 @@ export function createChat({ client, name = 'Petfolio', suggestions = DEFAULT_SU
   function setBusy(on) {
     busy = on;
     root.classList.toggle('pf-busy', on);
-    statusText.textContent = on ? 'Typing…' : 'Online';
+    statusText.textContent = on ? 'Typing…' : 'Ready';
     refreshSend();
   }
 

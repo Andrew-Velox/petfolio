@@ -32,6 +32,7 @@ import { CHARACTERS } from './characters/characters.js';
  * @param {boolean|object} [opts.chatter]  false = no random speech bubbles; { min, max } seconds between them
  * @param {string[]} [opts.suggestions]    Starter questions shown as chips in the chat ([] = none)
  * @param {Function} [opts.onSettings]      Settings button callback
+ * @param {'floor'|'page'|'corner'} [opts.physics='floor']  Movement: window edges only, page elements as ledges, or parked in a corner
  * @param {number}  [opts.idleScale]        Multiplier for long idle periods (1 = original Shimeji, <1 = livelier)
  * @returns {_Petfolio}
  */
@@ -50,6 +51,7 @@ _Petfolio.summon = function summon(opts = {}) {
     phrases,
     chatter,
     onSettings,
+    physics,
   } = opts;
 
   // ── Create a fullscreen transparent canvas ──────────────
@@ -83,6 +85,7 @@ _Petfolio.summon = function summon(opts = {}) {
   if (phrases) petOpts.phrases = phrases;
   if (chatter !== undefined) petOpts.chatter = chatter;
   if (onSettings) petOpts.onSettings = onSettings;
+  if (physics) petOpts.physics = physics;
 
   const pet = new _Petfolio(canvas, petOpts);
 

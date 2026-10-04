@@ -22,6 +22,7 @@ export const ICONS = {
     'Exit',
   ),
   // Chat panel
+  sparkle: svg('<path d="M12 2l2.3 6.2L20.5 10.5l-6.2 2.3L12 19l-2.3-6.2L3.5 10.5l6.2-2.3z"/><path d="M19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>', 'Assistant'),
   send: svg('<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>', 'Send'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>', 'Close'),
   reset: svg('<path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4.5v4.6h4.6"/>', 'New conversation'),

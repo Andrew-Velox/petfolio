@@ -27,6 +27,7 @@ export class Mascot {
     // Host hooks (all optional)
     this.onBehavior = null;   // (name) => void
     this.onSay      = null;   // (text) => void
+    this.onLostGround = null; // () => void — the footing went away (walked off an edge, ledge scrolled off…)
 
     env.mascot = this;
   }

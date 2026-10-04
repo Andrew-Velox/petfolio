@@ -1,6 +1,23 @@
 # Changelog
 
-`petfolio` (the widget) and `petfolio-cli` are released together and share a version number.
+`petfolio` (the widget) and `petfolio-cli` were released together as 2.0.0. From 2.1 they are versioned
+independently: a release only bumps the package that changed.
+
+## petfolio 2.1.0
+
+### Added
+- **Page physics** (`physics: 'page'`): paragraphs, headings, images and other stable block elements become
+  one-way ledges. The pet jumps up to them, walks along them, sits on the edge, steps off, and is carried along
+  when the page scrolls. It falls back to the classic window-edge behaviour on phones, touch devices, reduced
+  motion, pages with too few surfaces and layouts that never settle. Opt in or out per element with
+  `data-petfolio-platform` / `data-petfolio-ignore`. See "Page physics" in the README.
+- **`physics: 'corner'`**: the pet parks in the bottom corner and idles.
+- `pet.physicsMode`, `pet.physicsFallbackReason` and `pet.setPhysics(mode)`.
+- New chat box design: light card, status pill, blue user bubbles.
+
+### Changed
+- Exit and the chat first bring the pet down to the real floor when it stands on a ledge. With the default
+  `physics: 'floor'` nothing changes.
 
 ## 2.0.0
 

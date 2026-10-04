@@ -30,6 +30,7 @@ import { makeTextureLoader } from './textures.js';
 import { makeBubble }        from './bubble.js';
 import { initInteraction }   from './interaction.js';
 import { createUI }          from './ui/index.js';
+import { createPhysics }     from './page/physics.js';
 import { CHARACTERS, DEFAULT_CHARACTER } from './characters/characters.js';
 
 // Behaviours that just hold still (what the mascot does while auto-pilot is off).
@@ -114,6 +115,7 @@ export class Petfolio {
       }),
       {
         scaling: this._scale,
+        getScroll: () => ({ x: window.scrollX, y: window.scrollY }),
         config: {
           idleScale:     opts.idleScale ?? IDLE_DURATION_SCALE,
           exitOffscreen: EXIT_OFFSCREEN_OFFSET,
@@ -134,6 +136,7 @@ export class Petfolio {
       this._hideBubbles();
     };
     this.mascot.onSay       = (text) => this._say(text);
+    this.mascot.onLostGround = () => this._physics?.noteFall();
 
     // Spawn mid-screen and drop (same as the original), then idle / auto.
     this.mascot.anchor.x = Math.round(window.innerWidth / 2);
@@ -156,6 +159,7 @@ export class Petfolio {
     this.ui = opts.ui === false ? null : createUI(this, {
       name: opts.name, ai: opts.ai, chat: opts.chat, suggestions: opts.suggestions, onSettings: opts.onSettings,
     });
+    this._physics = createPhysics(this, opts.physics);
     this.app.ticker.add(this._frame, this);
   }
 
@@ -259,10 +263,10 @@ export class Petfolio {
     const name = m.behaviorName;
     if (m.dragging || name === 'Dragged') return;                  // held: wait for the release
     if (OFFSCREEN_BEHAVIOR.test(name)) { this._exitWanted = false; return; }
-    if (name !== 'Descend' && m.env.floor.isOn(m.anchor)) {
+    if (name !== 'Descend' && m.env.workArea.bottomBorder.isOn(m.anchor)) {
       this._exitWanted = false;
       this.changeState(Math.random() < 0.5 ? 'ExitRight' : 'ExitLeft');
-    } else if (!PHYSICS_BEHAVIORS.has(name) && (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor))) {
+    } else if (!PHYSICS_BEHAVIORS.has(name) && (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor) || m.env.ledge)) {
       m.setBehavior(this.config.buildBehavior('Descend'));
     }                                                              // else: falling / landing — check again next tick
   }
@@ -319,12 +323,25 @@ export class Petfolio {
     if (name === 'Chat' || name === 'Dragged' || name === 'Descend' || m.dragging || OFFSCREEN_BEHAVIOR.test(name)) return;
     // Fall / Thrown are fine to cut once the feet touch the floor (their own
     // follow-up would be a 4–8 s stand); in mid-air they just keep falling.
-    if (m.env.floor.isOn(m.anchor)) {
+    if (m.env.workArea.bottomBorder.isOn(m.anchor)) {
       m.setBehavior(this.config.buildBehavior('Chat'));
-    } else if (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor)) {
-      m.setBehavior(this.config.buildBehavior('Descend'));   // let go, drop to the floor
+    } else if (m.env.wall.isOn(m.anchor) || m.env.ceiling.isOn(m.anchor) || m.env.ledge) {
+      m.setBehavior(this.config.buildBehavior('Descend'));   // let go (or step off the ledge), drop to the floor
     }
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // PUBLIC API — Physics mode
+  // ═══════════════════════════════════════════════════════════
+
+  /** The physics in use right now: 'floor', 'page' or 'corner' ('page' may be 'floor' on phones / unstable layouts). */
+  get physicsMode() { return this._physics.mode; }
+
+  /** Why 'page' is not in use ('reduced-motion', 'touch-only', 'narrow-viewport', 'few-platforms', 'unstable'), or null. */
+  get physicsFallbackReason() { return this._physics.reason; }
+
+  /** Switch the requested physics mode at runtime: 'floor' | 'page' | 'corner'. */
+  setPhysics(mode) { this._physics.set(mode); }
 
   // ═══════════════════════════════════════════════════════════
   // PUBLIC API — Character & size
@@ -358,6 +375,7 @@ export class Petfolio {
   destroy() {
     this.mascot.autoEnabled = false;
     this._chatWanted = false;
+    this._physics?.destroy();
     this._interaction?.destroy();
     this.ui?.destroy();
     this.app.ticker.remove(this._frame, this);
@@ -450,13 +468,24 @@ export class Petfolio {
     // and never across teleports like wall → ceiling).
     let x = m.anchor.x;
     let y = m.anchor.y;
+    // Riding a ledge on a scrolling page: the scroll carry is not the pet's own motion, so it
+    // is left out of the interpolation and applied per frame instead (the pet stays glued
+    // to its ledge even though the engine ticks only 25 times a second).
+    const carried = this.env.carried;
+    const prevX = carried ? this._prevX + this.env.carry.x : this._prevX;
+    const prevY = carried ? this._prevY + this.env.carry.y : this._prevY;
     if (this.smooth && !m.dragging) {
-      const dx = x - this._prevX;
-      const dy = y - this._prevY;
+      const dx = x - prevX;
+      const dy = y - prevY;
       if (Math.hypot(dx, dy) <= SMOOTH_MAX_JUMP) {
-        x = this._prevX + dx * alpha;
-        y = this._prevY + dy * alpha;
+        x = prevX + dx * alpha;
+        y = prevY + dy * alpha;
       }
+    }
+    if (carried && !m.dragging) {
+      const shift = this.env.renderShift();
+      x += shift.x;
+      y += shift.y;
     }
     spr.x = x;
     spr.y = y;

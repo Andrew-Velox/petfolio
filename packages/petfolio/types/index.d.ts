@@ -31,6 +31,13 @@ export interface PetfolioAiOptions {
   model?: string;
 }
 
+/** Movement modes — see the `physics` option. */
+export type PetfolioPhysics = 'floor' | 'page' | 'corner';
+
+/** Why `physics: 'page'` is not in use right now. */
+export type PetfolioPhysicsFallback =
+  | 'reduced-motion' | 'touch-only' | 'narrow-viewport' | 'few-platforms' | 'unstable';
+
 export interface PetfolioOptions {
   /** Start auto-pilot immediately. Default `true`. */
   autoStart?: boolean;
@@ -56,6 +63,12 @@ export interface PetfolioOptions {
   chatter?: boolean | { min?: number; max?: number };
   /** Called when the menu's Settings button is pressed. */
   onSettings?: () => void;
+  /**
+   * How the pet moves. `'floor'` (default): the window edges only. `'page'`: the top edges of paragraphs,
+   * headings, images … are ledges to stand and walk on (falls back to `'floor'` on phones, touch devices,
+   * reduced motion and unstable layouts). `'corner'`: the pet parks in the bottom corner and idles.
+   */
+  physics?: PetfolioPhysics;
   /** Override where sprite PNGs are loaded from (dev only; sprites are bundled). */
   spriteDir?: string;
 }
@@ -95,6 +108,13 @@ export class Petfolio {
   startChat(): void;
   endChat(): void;
   readonly isChatting: boolean;
+
+  /** The movement mode in use right now (`'page'` may be `'floor'` — see `physicsFallbackReason`). */
+  readonly physicsMode: PetfolioPhysics;
+  /** Why `'page'` physics is not in use, or `null` (in use, or not requested). */
+  readonly physicsFallbackReason: PetfolioPhysicsFallback | null;
+  /** Change the requested movement mode at runtime. */
+  setPhysics(mode: PetfolioPhysics): void;
 
   readonly currentCharacter: string;
   readonly availableCharacters: string[];

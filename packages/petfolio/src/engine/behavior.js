@@ -61,6 +61,7 @@ export class Behavior {
       if (!(e instanceof LostGroundError)) throw e;
       // Walked off its border (or broke free while being held): fall.
       m.dragging = false;
+      m.onLostGround?.();
       m.setBehavior(this.config.buildBehavior('Fall'));
     }
   }
@@ -117,9 +118,16 @@ export class Configuration {
    * @param {BehaviorBuilder[]}      behaviors
    * @param {object} [hooks]
    */
-  constructor(actions, behaviors) {
+  constructor(actions, behaviors, opts = {}) {
     this.actions   = actions;
     this.behaviors = new Map(behaviors.map((b) => [b.name, b]));
+    // Corner mode (env.cornerMode) only picks from these: the pet parks and idles instead of roaming.
+    this.cornerAllowed = new Set(opts.cornerAllowed ?? []);
+  }
+
+  /** False for behaviours the current physics mode does not use (roaming in corner mode). */
+  isAllowed(name, mascot) {
+    return !mascot.env.cornerMode || this.cornerAllowed.has(name);
   }
 
   has(name) { return this.behaviors.has(name); }
@@ -141,12 +149,12 @@ export class Configuration {
 
     if (!prev || prev.nextAdd) {
       for (const b of this.behaviors.values()) {
-        if (b.isEffective(mascot)) { candidates.push([b.name, b.frequency]); total += b.frequency; }
+        if (b.isEffective(mascot) && this.isAllowed(b.name, mascot)) { candidates.push([b.name, b.frequency]); total += b.frequency; }
       }
     }
     if (prev) {
       for (const r of prev.nextRefs) {
-        if (r.frequency > 0 && (!r.condition || r.condition(mascot))) {
+        if (r.frequency > 0 && this.isAllowed(r.name, mascot) && (!r.condition || r.condition(mascot))) {
           candidates.push([r.name, r.frequency]); total += r.frequency;
         }
       }

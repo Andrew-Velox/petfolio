@@ -66,6 +66,7 @@ export function createConfig(userOpts = {}) {
   A.Offset = { kind: 'Offset', params: {} };
   A.Place  = { kind: 'Place',  params: {} };
   A.Say    = { kind: 'Say',    params: {} };
+  A.LedgeDrop = { kind: 'LedgeDrop', params: {} };
 
   // ── Standing / walking ───────────────────────────────────
   A.Stand = stay('Floor', [anim([w(1, 0, 0, 250)])]);
@@ -320,6 +321,49 @@ export function createConfig(userOpts = {}) {
       { Condition: once((m) => m.env.wall.isOn(m.anchor) && m.env.workArea.leftBorder.isOn(m.anchor)) }),
     seq([ref('Offset', { X: -1 }), ref('Falling'), ref('Bouncing')],
       { Condition: once((m) => m.env.wall.isOn(m.anchor) && m.env.workArea.rightBorder.isOn(m.anchor)) }),
+    ref('StepOffLedge', { Condition: once((m) => m.env.ledge !== null) }),
+  ]);
+
+  // Page ledges ------------------------------------------------
+  // Only reachable when the host supplies a collision map (physics: 'page').
+  const ledgeSpot = (m) => {
+    const span = m.env.ledgeSpan();
+    return span ? span.lo + rnd() * (span.hi - span.lo) : m.anchor.x;
+  };
+  const ledgeEdgeX = (m) => m.env.ledgeExit()?.x ?? m.anchor.x;
+
+  A.WalkAlongLedge = seq([ref('Walk', { TargetX: once(ledgeSpot) })]);
+  A.RunAlongLedge  = seq([ref('Run',  { TargetX: once(ledgeSpot) })]);
+
+  // Walk to the edge and sit with the legs dangling over it.
+  A.SitOnLedgeEdge = seq([
+    ref('Walk', { TargetX: once(ledgeEdgeX) }),
+    ref('SitWhileDanglingLegs'),
+  ]);
+
+  // Run to the edge and step off (or fall through, if the ledge has no free edge) → Fall.
+  A.StepOffLedge = seq([
+    ref('Dash', { TargetX: once(ledgeEdgeX) }),
+    ref('LedgeDrop'),
+    ref('Stand'),
+  ]);
+
+  // Jump up to the nearest ledge above, then catch the breath. If the ledge moved away
+  // (scrolling) the Stand loses its footing and the pet falls.
+  A.JumpToLedge = seq([
+    ref('Jumping', {
+      TargetX: once((m) => m.env.jumpTarget()?.x ?? m.anchor.x),
+      TargetY: once((m) => m.env.jumpTarget()?.y ?? m.anchor.y),
+    }),
+    ref('Stand', { Duration: between(30, 40) }),
+  ]);
+
+  // Corner mode: run to the bottom-right corner and settle there.
+  const cornerX = (m) => area(m).right - 90;
+  A.GoToCorner = seq([
+    ref('Run', { TargetX: once(cornerX) }),
+    ref('Look', { LookRight: false }),
+    ref('Stand', { Duration: between(20, 20) }),
   ]);
 
   // Chat: hold the SayHi frame (34) on the floor for as long as the chat
@@ -401,6 +445,7 @@ export function createConfig(userOpts = {}) {
   // BEHAVIOURS (conf/behaviors.xml)
   // ═══════════════════════════════════════════════════════════
   const onWall     = (m) => m.env.wall.isOn(m.anchor);
+  const onLedge    = (m) => m.env.ledge !== null;
   const onCeiling  = (m) => m.env.ceiling.isOn(m.anchor);
   const floorArea  = (m) => area(m).bottomBorder.isOn(m.anchor);
   const facingWall = (m) => (m.lookRight
@@ -477,11 +522,23 @@ export function createConfig(userOpts = {}) {
         && Math.abs(area(m).bottom - m.anchor.y) < area(m).height / 4],
     }),
 
+    // Page ledges (only when the host supplies a collision map) ---
+    B('WalkAlongLedge', 100, { conditions: [onLedge, (m) => m.env.ledgeSpan() !== null] }),
+    B('RunAlongLedge',   60, { conditions: [onLedge, (m) => m.env.ledgeSpan() !== null] }),
+    B('SitOnLedgeEdge',  60, { conditions: [onLedge, (m) => m.env.ledgeExit() !== null] }),
+    B('StepOffLedge',    40, { conditions: [onLedge] }),
+    B('JumpToLedge',    200, { conditions: [onFloor, (m) => m.env.jumpTarget() !== null] }),
+
+    // Corner mode: back to the corner after being moved
+    B('GoToCorner', 2000, {
+      conditions: [onFloor, (m) => m.env.cornerMode && Math.abs(m.anchor.x - cornerX(m)) > 8],
+    }),
+
     // Petfolio emotes — occasional extras on the floor -------
     B('SayHi',     40, { conditions: [floorArea] }),
-    B('TvClone',   20, { conditions: [floorArea] }),
+    B('TvClone',   20, { conditions: [onFloor] }),
     B('RemoveCap', 30, {
-      conditions: [floorArea],
+      conditions: [onFloor],
       next: next(true, ['SitDown', 100]),
     }),
 
@@ -496,8 +553,14 @@ export function createConfig(userOpts = {}) {
     B('EnterRight', 0, { allowOffscreen: true }),
   ];
 
-  return new Configuration(A, behaviors);
+  return new Configuration(A, behaviors, { cornerAllowed: CORNER_BEHAVIORS });
 }
+
+/** What the pet does in corner mode: stay put and idle (plus walking back to the corner). */
+export const CORNER_BEHAVIORS = [
+  'StandUp', 'SitDown', 'SitWhileDanglingLegs', 'LieDown',
+  'SitAndFaceMouse', 'SitAndSpinHead', 'TvClone', 'RemoveCap', 'GoToCorner',
+];
 
 /**
  * Short names kept from earlier Petfolio versions → the Shimeji behaviour

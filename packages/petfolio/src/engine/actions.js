@@ -275,6 +275,7 @@ export class Fall extends ActionBase {
     const a       = m.anchor;
 
     // Walk the path in ≤1 px steps so we can't skip over a wall or floor.
+    const bottom = env.workArea.bottomBorder;
     outer:
     for (let i = 0; i <= dev; i++) {
       const x = startX + Math.trunc(dx * i / dev);
@@ -282,8 +283,12 @@ export class Fall extends ActionBase {
       if (dy > 0) {
         for (let j = -80; j <= 0; j++) {
           a.x = x; a.y = y + j;
-          if (env.floor.isOn(a)) break outer;
+          if (bottom.isOn(a)) break outer;
         }
+        // Page ledges are one-way floors: only the exact line counts (no 80 px look-back, which
+        // would pull a mascot that is below a ledge up onto it).
+        const ledge = env.ledgeLanding(x, y, startY);
+        if (ledge) { a.x = x; a.y = ledge.y; break; }
       } else {
         a.x = x; a.y = y;
       }
@@ -400,6 +405,28 @@ export class Place extends InstantAction {
   }
 }
 
+/**
+ * Step off the ledge the mascot stands on. At an edge it takes two steps past it; with no
+ * edge to use (a ledge as wide as the page) it falls straight through, since ledges are
+ * one-way. The Stand that follows then loses its footing and Behavior drops into Fall.
+ * Petfolio addition.
+ */
+export class LedgeDrop extends InstantAction {
+  apply() {
+    const m = this.mascot;
+    const env = m.env;
+    const ledge = env.ledge;
+    if (!ledge) return;
+    const exit = env.ledgeExit();
+    if (exit && Math.abs(m.anchor.x - exit.x) <= 1) {
+      m.anchor.x = exit.x + exit.dir * 2;
+    } else {
+      env.dropThrough(ledge);
+      m.anchor.y += 1;
+    }
+  }
+}
+
 /** Show a speech bubble. Petfolio addition. */
 export class Say extends InstantAction {
   apply() {
@@ -493,7 +520,7 @@ export const select  = (children, params = {})   => ({ kind: 'Select',   childre
 /** Reference a named action, overriding some of its parameters. */
 export const ref     = (name, params = {})       => ({ kind: 'Ref', name, params });
 
-const LEAVES = { Stay, Move, Animate, Jump, Fall, Dragged, Regist, Offset, Look, Place, Say };
+const LEAVES = { Stay, Move, Animate, Jump, Fall, Dragged, Regist, Offset, Look, Place, Say, LedgeDrop };
 const COMPOSITES = { Sequence, Select };
 
 /**

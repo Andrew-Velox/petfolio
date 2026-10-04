@@ -38,7 +38,7 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 </script>
 ```
 
-> Pin a version in production: `https://unpkg.com/petfolio@2.0.0`.
+> Pin a version in production: `https://unpkg.com/petfolio@2.1.0`.
 
 ### React / Next.js
 
@@ -87,6 +87,7 @@ Petfolio.summon({
   phrases: ['Hi hi! 💕', 'Boop!'],          // your own cute lines
   chatter: { min: 20, max: 60 },            // seconds between random speech bubbles (false = off)
   ui: true,                   // click / right-click menu + chat (false = just the pet)
+  physics: 'page',            // 'floor' (default) | 'page' | 'corner' — see "Page physics"
   onSettings: () => {},       // called by the menu's Settings button (does nothing by default)
 });
 ```
@@ -104,6 +105,7 @@ Petfolio.summon({
 | `phrases` | ~30 built in | Lines for the say-hi animation and random chatter. |
 | `chatter` | `{min: 12, max: 30}` | Random speech bubbles. `false` = only the say-hi animation speaks. |
 | `ui` | `true` | The menu and chat panel. `false` = a plain pet, no UI. |
+| `physics` | `'floor'` | `'floor'`: the window edges only. `'page'`: paragraphs, headings and images become ledges (see "Page physics"). `'corner'`: the pet parks in the bottom corner and idles. |
 | `onSettings` | — | Callback for the menu's Settings button. |
 
 ---
@@ -120,6 +122,50 @@ Petfolio.summon({
 
 The overlay never blocks your page: the canvas covers the viewport but is `pointer-events: none` except
 while the pointer is over the pet's visible pixels.
+
+## Page physics
+
+By default the pet lives on the edges of the window: the floor, the two walls and the ceiling. With
+`physics: 'page'` it also uses your page: the **top edge of paragraphs, headings, images, figures, quotes,
+code blocks, tables, lists, buttons and `<header>` / `<nav>` / `<footer>` / `<aside>`** becomes a ledge. The pet
+jumps up to ledges, walks along them, sits on the edge with its legs dangling, steps off, and rides along when
+the page scrolls. Nothing on your page is moved or changed.
+
+```js
+Petfolio.summon({ physics: 'page' });
+```
+
+How it stays out of trouble:
+
+- **A simplified, invisible map.** The page is measured only on load, on resize, when the layout changes and
+  after a long scroll — never per frame. Ledges are one-way: the pet lands on them from above and falls or jumps
+  through them from below, so it can never get stuck inside your content.
+- **Only stable elements count.** Left out: hidden or transparent elements, anything covered (a modal, a cookie
+  banner), anything inside a scroll container or a transformed block (carousels, sliders), `position: sticky`
+  elements, anything animating, anything that moved between two measurements, and floating `position: fixed`
+  things like toasts. A fixed `<header>` / `<nav>` stays a ledge and does not move when the page scrolls.
+- **Scrolling.** A pet standing on a paragraph scrolls with it. When the paragraph leaves the screen (or gets too
+  close to the top, where the pet's head would be cut off) the pet is left behind and falls to the next ledge or
+  the floor.
+- **It falls back to `'floor'` by itself** — the classic behaviour, which works everywhere — when:
+  the viewport is narrower than 600 px, the device is touch-only, the visitor prefers reduced motion, the page has
+  fewer than 3 usable surfaces, or the layout will not settle (map changes five times in 12 seconds, or the pet keeps
+  losing its footing). After an unstable layout `'floor'` stays for 30 seconds, then `'page'` gets another chance.
+  `pet.physicsMode` and `pet.physicsFallbackReason` tell you what is running and why.
+- **The chat and Exit** need the real floor: from a ledge the pet walks to the edge and steps off first.
+- **`physics: 'corner'`** is a quiet mode for pages where a roaming pet would be in the way: it walks to the
+  bottom-right corner and idles there (sitting, looking at the mouse, the occasional emote). Dragging and the chat work as usual.
+
+Per-element control, with plain HTML attributes:
+
+```html
+<p data-petfolio-platform>Always a ledge, even if it is small or would be filtered out.</p>
+<div data-petfolio-ignore>This element and everything inside it is never a ledge.</div>
+```
+
+Limits to know: a `<header>` at the very top of the page has no visible top edge to stand on (the pet's head
+would be cut off), so ledges must be at least 100 px below the top of the window; only the first
+4,000 elements near the viewport are looked at; text inside iframes is not part of the map.
 
 ## API
 
@@ -141,6 +187,11 @@ Petfolio.availableCharacters();   // ['an2', 'finn']
 
 pet.startChat();            // what the menu's chat button does
 pet.endChat();
+
+pet.setPhysics('page');     // 'floor' | 'page' | 'corner' — change the movement mode at runtime
+pet.physicsMode;            // what is actually in use ('page' may be 'floor' — see below)
+pet.physicsFallbackReason;  // why 'page' is not in use: 'narrow-viewport' | 'touch-only' | 'reduced-motion'
+                            // | 'few-platforms' | 'unstable' (null when it is)
 
 pet.destroy();              // remove the pet, its canvas and its menu
 ```
@@ -379,6 +430,7 @@ It is kept in that browser's `localStorage`. Never ship this.
   mouse and pen are the primary targets.
 - **Multiple instances:** `summon()` reuses the `#petfolio-canvas` element. Call `pet.destroy()` before
   summoning again.
+- **Page physics:** `physics: 'page'` is opt-in; the default keeps the classic window-edge behaviour.
 - **Page scrollbars:** the pet's right wall is the visible edge of the page, not the edge behind the scrollbar.
 
 ---
