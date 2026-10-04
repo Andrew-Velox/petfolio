@@ -1,6 +1,6 @@
 {
   "name": "petfolio",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Drop-in animated desktop pet for any website. Shimeji-style PixiJS companion with auto-pilot, dragging, and 46 animation frames.",
   "type": "module",
   "main": "dist/petfolio.cjs",

@@ -3,6 +3,25 @@
 `petfolio` (the widget) and `petfolio-cli` were released together as 2.0.0. From 2.1 they are versioned
 independently: a release only bumps the package that changed.
 
+## petfolio 3.0.0
+
+### Breaking changes
+- **Only one avatar is built in: `finn`, which is now the default** (it was `an2`). The package shrinks from
+  ~1.9 MB to ~0.85 MB (3.2 MB → 0.8 MB packed). Every other avatar is **downloaded by name** from the repo's
+  `avatars/` folder through jsDelivr: `Petfolio.summon({ character: 'an2' })`. The new
+  [Avatars page](https://andrew-velox.github.io/petfolio/avatars/) lists the names. Sites using `an2` keep working but now
+  need network access to `cdn.jsdelivr.net` (and `img-src` for it if they set a Content-Security-Policy);
+  sites that relied on the old default now get `finn` — set `character: 'an2'` to keep the old look.
+- **The avatar button is gone from the pet's menu** (chat · settings · exit). The site owner picks the avatar.
+- `pet.setCharacter(name)` returns a promise (`true` once in use) because other avatars are downloaded;
+  `availableCharacters` lists only the bundled avatar. An unknown or invalid name no longer throws: the pet logs a
+  warning and keeps `finn`.
+
+### Added
+- `avatarBase` option: where avatars are downloaded from (self-host, or pin a version).
+- `avatars/<name>/` with `avatar.json` + `shime1–46.png` is all it takes to add an avatar
+  (`node scripts/check-avatars.mjs` validates it); the site's Avatars page is generated from the folder.
+
 ## petfolio 2.1.1
 
 ### Fixed

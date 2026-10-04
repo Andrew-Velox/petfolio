@@ -38,7 +38,7 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 </script>
 ```
 
-> Pin a version in production: `https://unpkg.com/petfolio@2.1.1`.
+> Pin a version in production: `https://unpkg.com/petfolio@3.0.0`.
 
 ### React / Next.js
 
@@ -77,7 +77,7 @@ class are exported.
 
 ```js
 Petfolio.summon({
-  character: 'finn',          // 'an2' | 'finn' — see Petfolio.availableCharacters()
+  character: 'an2',           // avatar name — pick one on the site's Avatars page (default: 'finn')
   scale: 0.95,                // sprite scale
   autoStart: true,            // start auto-pilot immediately (false = manual control)
   idleScale: 1,               // < 1 shortens Shimeji's long stand/sit periods (0.3 = livelier)
@@ -94,7 +94,8 @@ Petfolio.summon({
 
 | Option | Default | Meaning |
 |---|---|---|
-| `character` | first one | Avatar to start with. Visitors can switch from the menu. |
+| `character` | `'finn'` | Avatar name from the [Avatars page](https://andrew-velox.github.io/petfolio/avatars/). `finn` is built in; any other is downloaded. See "Avatars". |
+| `avatarBase` | jsDelivr | Where avatars are downloaded from (self-host or pin a version). |
 | `scale` | `0.95` | Sprite size multiplier. |
 | `autoStart` | `true` | Begin the random-behaviour auto-pilot. |
 | `idleScale` | `1` | Multiplier for the long idle periods (1 = original Shimeji). |
@@ -112,7 +113,7 @@ Petfolio.summon({
 
 ## Interaction
 
-- **Click or right-click** the pet to open the menu: **avatar** switch · **chat** · **settings** · **exit**.
+- **Click or right-click** the pet to open the menu: **chat** · **settings** · **exit**.
   (A tap works on touch screens, which have no right-click.)
 - **Drag** it by the head — it dangles, struggles if held too long, and is **thrown** with your mouse speed.
 - **Exit** sends the pet off screen; it peeks in from the corner. **Click the peeking pet** to bring it back.
@@ -122,6 +123,33 @@ Petfolio.summon({
 
 The overlay never blocks your page: the canvas covers the viewport but is `pointer-events: none` except
 while the pointer is over the pet's visible pixels.
+
+## Avatars
+
+The package contains **one avatar, `finn`**, which keeps it small (~0.8 MB). Every other avatar is downloaded
+by name when the pet starts, so you only ever load the one you chose.
+
+1. Open the **[Avatars page](https://andrew-velox.github.io/petfolio/avatars/)** and copy the name of the one you like.
+2. Use it: `Petfolio.summon({ character: 'an2' })`.
+
+```js
+Petfolio.summon({ character: 'an2' });                       // from the Avatars page
+Petfolio.summon({ character: 'an2', avatarBase: '/my-avatars/' });   // your own copy of the folders
+```
+
+- **Where they come from.** The sprites live in this repo's [`avatars/`](avatars) folder and are served by
+  jsDelivr (`https://cdn.jsdelivr.net/gh/Andrew-Velox/petfolio@main/avatars/<name>/shime1.png` …). That is the
+  default `avatarBase`. To pin a version use `…/petfolio@<tag>/avatars/`; to self-host, copy the folder you want
+  and point `avatarBase` at its parent.
+- **If the download fails** (wrong name, offline, blocked) the pet falls back to `finn` and logs a console
+  warning with the URL. New avatars can take up to ~12 hours to appear on jsDelivr after they are merged.
+- **Content-Security-Policy:** allow `img-src https://cdn.jsdelivr.net` (or your `avatarBase` origin).
+- **Switching at runtime:** `await pet.setCharacter('name')` → `true` once it is in use, `false` for an invalid name or
+  a failed download. The pet keeps its current look until the new one has downloaded.
+- **Add yours:** put a folder `avatars/<name>/` in a pull request, with `avatar.json`
+  (`{ "name", "displayName", "author" }`) and `shime1.png … shime46.png` (square, 64–256 px, ≤ 40 KB each; the
+  numbers are Shimeji's frame numbers). Check it with `node scripts/check-avatars.mjs`. The name is what people type, so use
+  lowercase letters, digits and dashes.
 
 ## Page physics
 
@@ -182,8 +210,8 @@ pet.triggerState('say_hi'); // …then auto-pilot resumes after ~3 s
 pet.chaseMouse();           // follow the pointer
 pet.exitToPeek();           // walk off screen and peek in (click it / startAuto() to return)
 
-pet.setCharacter('finn');
-Petfolio.availableCharacters();   // ['an2', 'finn']
+await pet.setCharacter('an2');    // downloads the avatar first; resolves true once it is in use
+Petfolio.availableCharacters();   // ['finn'] — the avatars built into the package
 
 pet.startChat();            // what the menu's chat button does
 pet.endChat();
@@ -421,10 +449,11 @@ It is kept in that browser's `localStorage`. Never ship this.
 
 ## Good to know
 
-- **Size:** ~1.9 MB (≈1 MB gzipped), because PixiJS and the sprites for both characters are inlined — nothing
-  else to host. Load it lazily (see the React example) so it doesn't block your page.
+- **Size:** ~0.85 MB (≈250 KB gzipped): PixiJS plus the default avatar, inlined — nothing else to host. Other avatars
+  are downloaded (about 0.2–0.8 MB each). Load the widget lazily (see the React example) so it doesn't block your page.
 - **Content-Security-Policy:** works with a strict CSP — no `unsafe-eval` and no `unsafe-inline` styles
-  needed. You do need `img-src data:` (sprites are data URLs) and, for the chat, a `connect-src` that includes
+  needed. You do need `img-src data:` (the default avatar is made of data URLs), `img-src https://cdn.jsdelivr.net` if you use
+  another avatar, and, for the chat, a `connect-src` that includes
   your route (`'self'` covers a same-origin route).
 - **Touch:** tap the pet for the menu. Dragging by touch is best-effort (the browser may scroll instead);
   mouse and pen are the primary targets.
@@ -449,7 +478,8 @@ floor/wall/ceiling conditions; the numbers live in `engine/shime-config.js` (a p
 cd packages/petfolio
 npm run dev              # sandbox with hot reload
 npm run build:lib        # dist/petfolio.mjs + .cjs + .global.js
-npm run inline-sprites   # regenerate the inlined sprite bundle (run after changing public/characters)
+npm run inline-sprites   # regenerate the inlined default avatar (run after changing avatars/<bundled one>)
+node ../../scripts/check-avatars.mjs   # validate the folders in avatars/
 node --test test/        # engine + AI tests (headless)
 cd ../petfolio-cli && npm test   # text file -> knowledge JSON, incl. the real binary
 ```
@@ -457,8 +487,8 @@ cd ../petfolio-cli && npm test   # text file -> knowledge JSON, incl. the real b
 The sandbox chat reads `public/petfolio-knowledge.json` (git-ignored): make one with
 `npx petfolio-cli ../../site/content/about.txt` from `packages/petfolio`.
 
-Adding an avatar: drop a folder of `shime1.png … shime46.png` (plus an optional `character.json` with a
-`displayName`) into `packages/petfolio/public/characters/<name>/` and run `npm run inline-sprites`.
+Adding an avatar: see "Avatars" above — a folder in `avatars/` is all it takes; it shows up on the site's Avatars
+page automatically. Only the avatar marked `"bundled": true` in its `avatar.json` is inlined into the package.
 
 Publishing (both packages): bump the versions, `npm login`, then `npm publish` in `packages/petfolio` and
 `packages/petfolio-cli` (`prepublishOnly` rebuilds and copies this README + the LICENSE into the package).
@@ -495,11 +525,13 @@ packages/
 │   │   ├── interaction.js   pointer → engine (click-through canvas, drag / throw / tap)
 │   │   ├── bubble.js, phrases.js, constants.js, textures.js
 │   │   ├── ai/              knowledge loader + chat client (no DOM)
-│   │   ├── ui/              icon menu, avatar picker, chat panel
+│   │   ├── ui/              icon menu, chat panel
+│   │   ├── characters/      the bundled default avatar + remote avatar loading
 │   │   └── engine/          Shimeji engine port (no Pixi/DOM)
 │   ├── types/index.d.ts
 │   └── test/
 └── petfolio-cli/        ← about-me.txt → public/petfolio-knowledge.json (npm: petfolio-cli)
+avatars/                 ← avatar sprites (shime1–46.png + avatar.json), served by jsDelivr and listed on the site
 site/                    ← the Petfolio website (Next.js) — also a working example of everything above
 ```
 

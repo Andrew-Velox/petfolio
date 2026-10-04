@@ -26,12 +26,13 @@ import {
 } from './constants.js';
 import { phrasePicker }       from './phrases.js';
 import { createWorld, STATE_ALIASES, TICK_MS } from './engine/index.js';
-import { makeTextureLoader } from './textures.js';
+import { makeTextureLoader, whenLoaded } from './textures.js';
 import { makeBubble }        from './bubble.js';
 import { initInteraction }   from './interaction.js';
 import { createUI }          from './ui/index.js';
 import { createPhysics }     from './page/physics.js';
 import { CHARACTERS, DEFAULT_CHARACTER } from './characters/characters.js';
+import { DEFAULT_AVATAR_BASE, AVATAR_FRAMES, isValidAvatarName, avatarBaseUrl } from './characters/remote.js';
 
 // Behaviours that just hold still (what the mascot does while auto-pilot is off).
 // Pixi compiles shader uniform-sync code with `new Function`, which a strict
@@ -49,7 +50,9 @@ export class Petfolio {
    * @param {HTMLCanvasElement} canvas
    * @param {object}            [opts]
    * @param {string}            [opts.spriteDir='/sprites/']  Dev-mode sprite path
-   * @param {string}            [opts.character]              Character key (default: first registered)
+   * @param {string}            [opts.character]              Avatar name. The bundled default ('finn') is built in; any other name is
+   *                                                          downloaded from the avatar CDN (see the Avatars page on the site)
+   * @param {string}            [opts.avatarBase]             Where avatars are downloaded from (default: jsDelivr, the repo's /avatars folder)
    * @param {number}            [opts.scale]                  Sprite scale (default 0.95)
    * @param {number}            [opts.idleScale]              Multiplier for long idle periods (default 1 = Shimeji)
    * @param {boolean}           [opts.ui=true]                Right-click icon bar + chat panel (false = headless pet)
@@ -60,13 +63,11 @@ export class Petfolio {
    * @param {boolean}           [opts.chat=true]              false = hide the chat button (no AI)
    * @param {string[]}          [opts.suggestions]            Starter questions shown as chips in the chat ([] = none)
    * @param {Function}          [opts.onSettings]             Called when the menu's settings button is pressed
+   * @param {'floor'|'page'|'corner'} [opts.physics='floor']  'floor' = window edges only; 'page' = page elements are ledges
+   *                                                          (falls back to 'floor' on phones / unstable layouts); 'corner' = parks in the corner
    */
   constructor(canvas, opts = {}) {
-    const initialChar = opts.character ?? DEFAULT_CHARACTER;
-    if (!CHARACTERS[initialChar]) {
-      throw new Error(`Petfolio: unknown character "${initialChar}". ` +
-        `Available: ${Object.keys(CHARACTERS).join(', ')}`);
-    }
+    const wantedChar = opts.character ?? DEFAULT_CHARACTER;
 
     // ── Pixi bootstrap ──────────────────────────────────────
     PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -78,8 +79,10 @@ export class Petfolio {
 
     // ── Character / textures ────────────────────────────────
     this._spriteDir        = opts.spriteDir ?? '/sprites/';
-    this._currentCharacter = initialChar;
-    this._tex              = this._loaderFor(initialChar);
+    this._avatarBase       = opts.avatarBase ?? DEFAULT_AVATAR_BASE;
+    this._avatarToken      = 0;                 // newest setCharacter() call wins when downloads overlap
+    this._currentCharacter = DEFAULT_CHARACTER; // always starts as the bundled avatar; a remote one replaces it once downloaded
+    this._tex              = this._loaderFor(DEFAULT_CHARACTER);
 
     // ── Sprite (one sprite, re-posed by the engine every tick) ──
     this._scale = opts.scale ?? SPRITE_SCALE;
@@ -161,6 +164,10 @@ export class Petfolio {
     });
     this._physics = createPhysics(this, opts.physics);
     this.app.ticker.add(this._frame, this);
+    if (wantedChar !== DEFAULT_CHARACTER) {
+      this.sprite.visible = false;           // no flash of the default while the requested avatar downloads
+      this.setCharacter(wantedChar);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -348,21 +355,56 @@ export class Petfolio {
   // ═══════════════════════════════════════════════════════════
 
   get currentCharacter() { return this._currentCharacter; }
+
+  /** Avatars built into the package (just the default). Any other avatar name is downloaded. */
   get availableCharacters() { return Object.keys(CHARACTERS); }
 
   /**
-   * Switch to a different character at runtime. Behaviour is untouched —
-   * only the sprites change, so it keeps doing whatever it was doing.
+   * Switch to another avatar at runtime. Behaviour is untouched — only the sprites change,
+   * so it keeps doing whatever it was doing. The bundled avatar switches at once; any other
+   * name is downloaded first (the pet keeps its current look until the new one is ready).
+   * @param {string} name  avatar name, e.g. 'finn' or 'an2'
+   * @returns {Promise<boolean>} true once the avatar is in use; false if the name is invalid or the download failed
    */
-  setCharacter(name) {
-    if (name === this._currentCharacter) return;
-    if (!CHARACTERS[name]) {
-      throw new Error(`Petfolio: unknown character "${name}". ` +
-        `Available: ${Object.keys(CHARACTERS).join(', ')}`);
+  async setCharacter(name) {
+    const token = ++this._avatarToken;
+    if (name === this._currentCharacter) { this.sprite.visible = true; return true; }
+
+    if (CHARACTERS[name]) {
+      this._applyCharacter(name, this._loaderFor(name));
+      return true;
     }
+    if (!isValidAvatarName(name)) {
+      console.warn(`Petfolio: "${name}" is not a valid avatar name (lowercase letters, digits and dashes). ` +
+        `Keeping "${this._currentCharacter}".`);
+      this.sprite.visible = true;
+      return false;
+    }
+
+    const dir = avatarBaseUrl(this._avatarBase, name);
+    const tex = makeTextureLoader(dir, null);
+    try {
+      await whenLoaded(tex(1));
+    } catch (err) {
+      if (token === this._avatarToken) {
+        console.warn(`Petfolio: could not load the avatar "${name}" from ${dir}shime1.png (${err.message}). ` +
+          `Keeping "${this._currentCharacter}". If your site sets a Content-Security-Policy, allow ` +
+          `img-src for ${new URL(dir, location.href).origin}; check the name on the site's Avatars page.`);
+        this.sprite.visible = true;
+      }
+      return false;
+    }
+    if (token !== this._avatarToken) return false;   // a newer setCharacter() call took over
+    this._applyCharacter(name, tex);
+    for (let n = 2; n <= AVATAR_FRAMES; n++) tex(n); // warm the other frames so animations do not pop in
+    return true;
+  }
+
+  _applyCharacter(name, loader) {
     this._currentCharacter = name;
-    this._tex = this._loaderFor(name);
+    this._tex = loader;
     this._lastImg = null;           // force the next render to swap texture
+    this.sprite.visible = true;
   }
 
   get scale() { return this._scale; }

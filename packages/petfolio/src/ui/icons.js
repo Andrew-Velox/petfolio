@@ -4,10 +4,6 @@ const svg = (inner, label) =>
   `<svg viewBox="0 0 24 24" role="img" aria-label="${label}">${inner}</svg>`;
 
 export const ICONS = {
-  avatar: svg(
-    '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="9.5" r="3.3"/><path d="M5.6 18.6c1.3-3 3.6-4.4 6.4-4.4s5.1 1.4 6.4 4.4"/>',
-    'Switch avatar',
-  ),
   chat: svg(
     '<path d="M5 4h14a2.5 2.5 0 0 1 2.5 2.5v8A2.5 2.5 0 0 1 19 17H11l-4.5 4v-4H5a2.5 2.5 0 0 1-2.5-2.5v-8A2.5 2.5 0 0 1 5 4z"/>' +
     '<circle cx="8" cy="10.5" r=".9" fill="currentColor"/><circle cx="12" cy="10.5" r=".9" fill="currentColor"/><circle cx="16" cy="10.5" r=".9" fill="currentColor"/>',

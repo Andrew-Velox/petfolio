@@ -37,12 +37,14 @@ The key lives in a local .env file, which must stay out of git. The route also d
 
 ## Right-click menu
 
-Clicking or right-clicking the pet opens a small menu with four buttons: switch avatar, chat, settings and exit.
+Clicking or right-clicking the pet opens a small menu with three buttons: chat, settings and exit.
 Exit sends the pet off screen where it peeks in from the corner, and clicking it brings it back.
 
 ## Avatars
 
-Petfolio comes with more than one avatar, and visitors can switch between them from the menu. The avatars are pixel art characters.
+Petfolio comes with one built-in avatar, Finn, which keeps the package small. Every other avatar is downloaded by name, only when a website asks for it.
+The Avatars page on this site lists them all: the site owner copies the name of the one they like and sets it with the character option, for example Petfolio.summon({ character: 'an2' }).
+Anyone can add a new pixel art avatar by sending a pull request that adds a folder to the avatars folder of the GitHub repository.
 
 ## License and cost
 

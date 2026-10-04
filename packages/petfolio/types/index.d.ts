@@ -41,8 +41,18 @@ export type PetfolioPhysicsFallback =
 export interface PetfolioOptions {
   /** Start auto-pilot immediately. Default `true`. */
   autoStart?: boolean;
-  /** Character key, e.g. `'an2'` or `'finn'`. See `Petfolio.availableCharacters()`. */
+  /**
+   * Avatar name. `'finn'` (the default) is built into the package; any other name from the
+   * site's Avatars page (e.g. `'an2'`) is downloaded from the avatar CDN when the pet starts.
+   * If the download fails the pet falls back to `'finn'` and logs a warning.
+   */
   character?: string;
+  /**
+   * Where avatars other than the bundled one are downloaded from. Default: jsDelivr serving the
+   * repo's `avatars/` folder. Point it at your own copy (or a pinned tag) to self-host.
+   * Sites with a Content-Security-Policy must allow `img-src` for this origin.
+   */
+  avatarBase?: string;
   /** Sprite scale. Default `0.95`. */
   scale?: number;
   /** Multiplier for the long idle periods (1 = original Shimeji, <1 = livelier). */
@@ -79,7 +89,7 @@ export class Petfolio {
    * start its auto-pilot. Browser only — call it from `useEffect` / `onMount` in SSR frameworks.
    */
   static summon(options?: PetfolioOptions): Petfolio;
-  /** Keys of the bundled characters. */
+  /** Names of the avatars built into the package (just the default). Others are downloaded by name. */
   static availableCharacters(): string[];
 
   /** Use `Petfolio.summon()` unless you manage your own canvas. */
@@ -117,8 +127,14 @@ export class Petfolio {
   setPhysics(mode: PetfolioPhysics): void;
 
   readonly currentCharacter: string;
+  /** Names of the avatars built into the package (just the default). */
   readonly availableCharacters: string[];
-  setCharacter(name: string): void;
+  /**
+   * Switch avatar. The bundled one switches at once; any other name is downloaded first and the pet
+   * keeps its current look until it is ready.
+   * @returns `true` once the avatar is in use, `false` for an invalid name or a failed download
+   */
+  setCharacter(name: string): Promise<boolean>;
   scale: number;
 
   /** Remove the pet, its canvas and its menu. */

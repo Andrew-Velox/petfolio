@@ -19,19 +19,6 @@ const CSS = `
 .pf-btn:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
 .pf-btn svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ── Avatar picker ────────────────────────────────────── */
-.pf-avatars {
-  position: fixed; z-index: 100002; display: none; flex-direction: column; min-width: 160px; padding: 6px;
-  background: #a9a9a9; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.28);
-}
-.pf-avatars.pf-open { display: flex; }
-.pf-avatar-item {
-  padding: 9px 12px; border: 0; border-radius: 8px; background: transparent; color: #111;
-  font-size: 14px; text-align: left; cursor: pointer;
-}
-.pf-avatar-item:hover { background: rgba(0,0,0,.14); }
-.pf-avatar-item.pf-active { background: rgba(0,0,0,.24); font-weight: 600; }
-
 /* ── Chat panel (takes the place of the pet's speech bubble) ── */
 .pf-chat {
   --pf-bg: #fff; --pf-body: #f6f8fb; --pf-line: #e3e8f0; --pf-line-strong: #d3dae6;

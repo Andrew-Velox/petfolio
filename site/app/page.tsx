@@ -1,9 +1,7 @@
-import Link from "next/link";
 import CopyCommand from "./components/CopyCommand";
+import SiteHeader from "./components/SiteHeader";
 import { asset } from "./lib/asset";
-
-const GITHUB = "https://github.com/Andrew-Velox/petfolio";
-const NPM = "https://www.npmjs.com/package/petfolio";
+import { GITHUB, NPM } from "./lib/links";
 
 const FEATURES = [
   {
@@ -28,8 +26,8 @@ const FEATURES = [
   },
   {
     emoji: "🎀",
-    title: "Switch avatars",
-    body: "Right-click for the menu: change avatar, chat, settings, or send it off screen.",
+    title: "Pick your avatar",
+    body: "Choose a friend on the Avatars page and set it with one option. Only the one you pick is ever downloaded.",
   },
   {
     emoji: "🪪",
@@ -94,37 +92,7 @@ export default function Home() {
         }}
       />
 
-      {/* Nav */}
-      <header className="sticky top-0 z-20 border-b border-line bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid size-9 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-line">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset("/avatars/logo.png")} alt="" className="sprite size-9 object-cover" style={{ filter: "none" }} />
-            </span>
-            <span className="text-xl font-black tracking-tight">Petfolio</span>
-          </Link>
-          <nav className="flex items-center gap-1 text-[15px] font-semibold text-muted sm:gap-2">
-            <a href="#features" className="hidden rounded-full px-3 py-2 transition hover:text-foreground sm:block">
-              Features
-            </a>
-            <a href="#how" className="hidden rounded-full px-3 py-2 transition hover:text-foreground sm:block">
-              How it works
-            </a>
-            <a href={GITHUB} target="_blank" rel="noopener noreferrer" className="rounded-full px-3 py-2 transition hover:text-foreground">
-              GitHub
-            </a>
-            <a
-              href={NPM}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 rounded-full bg-black px-4 py-2 text-white transition hover:bg-neutral-800"
-            >
-              npm
-            </a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader home />
 
       {/* Hero */}
       <section className="mx-auto flex min-h-[calc(100svh-4.1rem)] max-w-6xl flex-col items-center justify-center px-6 py-10 text-center">
@@ -132,7 +100,7 @@ export default function Home() {
           {/* version badge: aligned with the wordmark's left edge */}
           <span className="rise mb-5 flex w-fit items-center gap-2 rounded-full border border-line bg-white/80 px-3.5 py-1.5 text-sm font-semibold text-muted">
             <span className="size-2 rounded-full bg-emerald-400" />
-            v2.1.0 · free & open source
+            v3.0.0 · free & open source
           </span>
           {/* font-size lives on this wrapper so avatar sizes/positions can use em */}
           <div className="relative" style={{ fontSize: "clamp(4.2rem, min(21vw, 30svh), 17rem)" }}>

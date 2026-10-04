@@ -1,0 +1,23 @@
+# Validates the avatar folders (avatars/<name>/): names, metadata, 46 square PNG frames, size limits.
+# Runs on pull requests and pushes that touch avatars/, so a broken avatar never reaches the site or the CDN.
+name: Check avatars
+
+on:
+  pull_request:
+    paths: ["avatars/**", "scripts/check-avatars.mjs"]
+  push:
+    branches: [main]
+    paths: ["avatars/**", "scripts/check-avatars.mjs"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/check-avatars.mjs

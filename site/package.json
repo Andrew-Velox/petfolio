@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "kb": "petfolio-cli content/about.txt",
-    "prebuild": "npm run kb",
-    "predev": "npm run kb"
+    "prebuild": "npm run kb && npm run avatars",
+    "predev": "npm run kb && npm run avatars",
+    "avatars": "node scripts/sync-avatars.mjs"
   },
   "dependencies": {
     "next": "^15.5.27",

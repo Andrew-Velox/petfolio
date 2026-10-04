@@ -22,7 +22,8 @@ import { CHARACTERS } from './characters/characters.js';
  * @param {object}  [opts]
  * @param {boolean} [opts.autoStart=true]   Start auto-pilot immediately
  * @param {string}  [opts.spriteDir]        Override sprite directory
- * @param {string}  [opts.character]        Character key (e.g. 'an2', 'finn')
+ * @param {string}  [opts.character]        Avatar name: 'finn' (bundled, default) or any avatar from the site's Avatars page (downloaded)
+ * @param {string}  [opts.avatarBase]       Where avatars are downloaded from (default: jsDelivr)
  * @param {number}  [opts.scale]            Override sprite scale
  * @param {boolean} [opts.ui=true]         Right-click menu + chat (false = no UI)
  * @param {string}  [opts.name]             Persona name for the chat
@@ -42,6 +43,7 @@ _Petfolio.summon = function summon(opts = {}) {
     spriteDir,
     scale,
     character,
+    avatarBase,
     idleScale,
     ui,
     name,
@@ -75,6 +77,7 @@ _Petfolio.summon = function summon(opts = {}) {
   const petOpts = {};
   if (spriteDir) petOpts.spriteDir = spriteDir;
   if (character) petOpts.character = character;
+  if (avatarBase) petOpts.avatarBase = avatarBase;
   if (scale) petOpts.scale = scale;
   if (idleScale) petOpts.idleScale = idleScale;
   if (ui !== undefined) petOpts.ui = ui;
