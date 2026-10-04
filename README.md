@@ -77,7 +77,7 @@ class are exported.
 
 ```js
 Petfolio.summon({
-  character: 'an2',           // avatar name — pick one on the site's Avatars page (default: 'finn')
+  character: 'saeyoung',           // avatar name — pick one on the site's Avatars page (default: 'finn')
   scale: 0.95,                // sprite scale
   autoStart: true,            // start auto-pilot immediately (false = manual control)
   idleScale: 1,               // < 1 shortens Shimeji's long stand/sit periods (0.3 = livelier)
@@ -130,11 +130,11 @@ The package contains **one avatar, `finn`**, which keeps it small (~0.8 MB). Eve
 by name when the pet starts, so you only ever load the one you chose.
 
 1. Open the **[Avatars page](https://andrew-velox.github.io/petfolio/avatars/)** and copy the name of the one you like.
-2. Use it: `Petfolio.summon({ character: 'an2' })`.
+2. Use it: `Petfolio.summon({ character: 'saeyoung' })`.
 
 ```js
-Petfolio.summon({ character: 'an2' });                       // from the Avatars page
-Petfolio.summon({ character: 'an2', avatarBase: '/my-avatars/' });   // your own copy of the folders
+Petfolio.summon({ character: 'saeyoung' });                       // from the Avatars page
+Petfolio.summon({ character: 'saeyoung', avatarBase: '/my-avatars/' });   // your own copy of the folders
 ```
 
 - **Where they come from.** The sprites live in this repo's [`avatars/`](avatars) folder and are served by
@@ -147,7 +147,7 @@ Petfolio.summon({ character: 'an2', avatarBase: '/my-avatars/' });   // your own
 - **Switching at runtime:** `await pet.setCharacter('name')` → `true` once it is in use, `false` for an invalid name or
   a failed download. The pet keeps its current look until the new one has downloaded.
 - **Add yours:** put a folder `avatars/<name>/` in a pull request, with `avatar.json`
-  (`{ "name", "displayName", "author" }`) and `shime1.png … shime46.png` (square, 64–256 px, ≤ 40 KB each; the
+  (`{ "name", "displayName", "author" }`) and `shime1.png … shime46.png` (64–320 px wide and tall, ≤ 40 KB each; the
   numbers are Shimeji's frame numbers). Check it with `node scripts/check-avatars.mjs`. The name is what people type, so use
   lowercase letters, digits and dashes.
 
@@ -210,7 +210,7 @@ pet.triggerState('say_hi'); // …then auto-pilot resumes after ~3 s
 pet.chaseMouse();           // follow the pointer
 pet.exitToPeek();           // walk off screen and peek in (click it / startAuto() to return)
 
-await pet.setCharacter('an2');    // downloads the avatar first; resolves true once it is in use
+await pet.setCharacter('saeyoung');    // downloads the avatar first; resolves true once it is in use
 Petfolio.availableCharacters();   // ['finn'] — the avatars built into the package
 
 pet.startChat();            // what the menu's chat button does

@@ -363,7 +363,7 @@ export class Petfolio {
    * Switch to another avatar at runtime. Behaviour is untouched — only the sprites change,
    * so it keeps doing whatever it was doing. The bundled avatar switches at once; any other
    * name is downloaded first (the pet keeps its current look until the new one is ready).
-   * @param {string} name  avatar name, e.g. 'finn' or 'an2'
+   * @param {string} name  avatar name, e.g. 'finn' or 'saeyoung'
    * @returns {Promise<boolean>} true once the avatar is in use; false if the name is invalid or the download failed
    */
   async setCharacter(name) {

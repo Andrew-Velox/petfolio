@@ -101,14 +101,14 @@ test('checker: reports bad names, mismatching or missing metadata', () => withTm
   assert.match(checkAvatar(d).join('\n'), /avatar\.json is missing/);
 }));
 
-test('checker: reports missing, non-PNG, non-square, too small/large and oversized frames', () => withTmp((root) => {
+test('checker: reports missing, non-PNG, too small/large and oversized frames', () => withTmp((root) => {
   assert.match(checkAvatar(makeAvatar(root, 'm', { skip: [7, 46] })).join('\n'), /shime7\.png is missing[\s\S]*shime46\.png is missing/);
   const notPng = makeAvatar(root, 'n'); fs.writeFileSync(path.join(notPng, 'shime3.png'), 'hello world, definitely not a png');
   assert.match(checkAvatar(notPng).join('\n'), /shime3\.png is not a PNG/);
   const wide = makeAvatar(root, 'w'); fs.writeFileSync(path.join(wide, 'shime2.png'), (() => { const b = png(128); b.writeUInt32BE(200, 16); return b; })());
-  assert.match(checkAvatar(wide).join('\n'), /frames must be square/);
-  assert.match(checkAvatar(makeAvatar(root, 'tiny', { size: 32 })).join('\n'), /must be 64–256 px/);
-  assert.match(checkAvatar(makeAvatar(root, 'huge', { size: 300 })).join('\n'), /must be 64–256 px/);
+  assert.deepEqual(checkAvatar(wide), []);   // non-square frames are fine
+  assert.match(checkAvatar(makeAvatar(root, 'tiny', { size: 32 })).join('\n'), /must be 64–320 px/);
+  assert.match(checkAvatar(makeAvatar(root, 'huge', { size: 400 })).join('\n'), /must be 64–320 px/);
   assert.match(checkAvatar(makeAvatar(root, 'fat', { bigFrame: 5 })).join('\n'), /shime5\.png is .* KB; the limit/);
   assert.match(checkAvatar(makeAvatar(root, 'junk', { extra: ['notes.txt', 'shime47.png'] })).join('\n'), /unexpected files: notes\.txt, shime47\.png/);
 }));

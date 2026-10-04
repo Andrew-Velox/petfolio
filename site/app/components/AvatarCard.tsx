@@ -61,9 +61,7 @@ export default function AvatarCard({ avatar }: { avatar: AvatarInfo }) {
         <img
           src={asset(`/avatar-previews/${avatar.name}/shime${frame}.png`)}
           alt={`${avatar.displayName} avatar`}
-          width={128}
-          height={128}
-          className="sprite size-32"
+          className="sprite h-auto max-h-36 w-auto max-w-[9rem]"
         />
       </div>
 

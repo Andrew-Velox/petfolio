@@ -11,9 +11,152 @@
     ]
   },
   {
-    "name": "an2",
-    "displayName": "An2",
+    "name": "ayaka",
+    "displayName": "Ayaka",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "gojo",
+    "displayName": "Gojo",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "homura",
+    "displayName": "Homura",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "mami",
+    "displayName": "Mami",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "mew",
+    "displayName": "Mew",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "opm",
+    "displayName": "One Punch Man",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pikachu",
+    "displayName": "Pikachu",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "psyche",
+    "displayName": "Psyche",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "quilldren",
+    "displayName": "Quilldren",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "redfox",
+    "displayName": "Red Fox",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rick",
+    "displayName": "Rick",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "saeyoung",
+    "displayName": "Saeyoung",
     "author": "kypo",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "shiro",
+    "displayName": "Shiro",
+    "author": "unknown",
+    "bundled": false,
+    "frames": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "name": "spongebob",
+    "displayName": "SpongeBob",
+    "author": "unknown",
     "bundled": false,
     "frames": [
       1,

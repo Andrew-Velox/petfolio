@@ -24,7 +24,7 @@ export default function AvatarsPage() {
         <div className="mt-8 overflow-x-auto rounded-2xl bg-black px-5 py-4 text-white">
           <code className="whitespace-nowrap font-mono text-[14.5px]">
             <span className="select-none text-neutral-500">{"// "}</span>
-            Petfolio.summon({"{ "}character: <span className="text-emerald-300">&apos;an2&apos;</span>{" }"})
+            Petfolio.summon({"{ "}character: <span className="text-emerald-300">&apos;saeyoung&apos;</span>{" }"})
           </code>
         </div>
 

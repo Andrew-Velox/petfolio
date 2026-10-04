@@ -6,7 +6,7 @@
  *
  * Every folder avatars/<name>/ must contain:
  *   avatar.json   { "name": "<name>", "displayName": "…", "author": "…", "bundled"?: true }
- *   shime1.png … shime46.png   one PNG per animation frame, square, 64–256 px, ≤ 40 KB each
+ *   shime1.png … shime46.png   one PNG per animation frame, 64–320 px wide and tall (not necessarily square), ≤ 40 KB each
  *
  * Folder names are what site owners type into `character: '…'`, so they must be
  * lowercase letters, digits and dashes. An avatar may weigh at most 1.5 MB in total.
@@ -20,7 +20,7 @@ export const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,31}$/;
 export const MAX_FRAME_BYTES = 40 * 1024;
 export const MAX_TOTAL_BYTES = 1.5 * 1024 * 1024;
 export const MIN_SIZE = 64;
-export const MAX_SIZE = 256;
+export const MAX_SIZE = 320;
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -55,8 +55,7 @@ export function checkAvatar(dir) {
     if (buf.length < 24 || !buf.subarray(0, 8).equals(PNG_SIGNATURE)) { fail(`${file} is not a PNG`); continue; }
     const w = buf.readUInt32BE(16);
     const h = buf.readUInt32BE(20);
-    if (w !== h) fail(`${file} is ${w}×${h}; frames must be square`);
-    else if (w < MIN_SIZE || w > MAX_SIZE) fail(`${file} is ${w}×${h}; frames must be ${MIN_SIZE}–${MAX_SIZE} px`);
+    if (w < MIN_SIZE || w > MAX_SIZE || h < MIN_SIZE || h > MAX_SIZE) fail(`${file} is ${w}×${h}; width and height must be ${MIN_SIZE}–${MAX_SIZE} px`);
     if (buf.length > MAX_FRAME_BYTES) fail(`${file} is ${(buf.length / 1024).toFixed(1)} KB; the limit is ${MAX_FRAME_BYTES / 1024} KB`);
   }
   if (total > MAX_TOTAL_BYTES) fail(`frames total ${(total / 1024 / 1024).toFixed(2)} MB; the limit is ${MAX_TOTAL_BYTES / 1024 / 1024} MB`);

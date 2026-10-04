@@ -43,7 +43,7 @@ export interface PetfolioOptions {
   autoStart?: boolean;
   /**
    * Avatar name. `'finn'` (the default) is built into the package; any other name from the
-   * site's Avatars page (e.g. `'an2'`) is downloaded from the avatar CDN when the pet starts.
+   * site's Avatars page (e.g. `'saeyoung'`) is downloaded from the avatar CDN when the pet starts.
    * If the download fails the pet falls back to `'finn'` and logs a warning.
    */
   character?: string;

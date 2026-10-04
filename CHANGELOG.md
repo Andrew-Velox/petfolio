@@ -8,10 +8,10 @@ independently: a release only bumps the package that changed.
 ### Breaking changes
 - **Only one avatar is built in: `finn`, which is now the default** (it was `an2`). The package shrinks from
   ~1.9 MB to ~0.85 MB (3.2 MB → 0.8 MB packed). Every other avatar is **downloaded by name** from the repo's
-  `avatars/` folder through jsDelivr: `Petfolio.summon({ character: 'an2' })`. The new
-  [Avatars page](https://andrew-velox.github.io/petfolio/avatars/) lists the names. Sites using `an2` keep working but now
+  `avatars/` folder through jsDelivr: `Petfolio.summon({ character: 'saeyoung' })`. The new
+  [Avatars page](https://andrew-velox.github.io/petfolio/avatars/) lists the names. Sites using an avatar now
   need network access to `cdn.jsdelivr.net` (and `img-src` for it if they set a Content-Security-Policy);
-  sites that relied on the old default now get `finn` — set `character: 'an2'` to keep the old look.
+  sites that relied on the old default now get `finn` — set `character: 'saeyoung'` to keep the old look.
 - **The avatar button is gone from the pet's menu** (chat · settings · exit). The site owner picks the avatar.
 - `pet.setCharacter(name)` returns a promise (`true` once in use) because other avatars are downloaded;
   `availableCharacters` lists only the bundled avatar. An unknown or invalid name no longer throws: the pet logs a

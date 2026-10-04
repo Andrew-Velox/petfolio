@@ -1,4 +1,4 @@
-# Validates the avatar folders (avatars/<name>/): names, metadata, 46 square PNG frames, size limits.
+# Validates the avatar folders (avatars/<name>/): names, metadata, 46 PNG frames, size limits.
 # Runs on pull requests and pushes that touch avatars/, so a broken avatar never reaches the site or the CDN.
 name: Check avatars
 

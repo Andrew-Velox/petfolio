@@ -43,7 +43,7 @@ Exit sends the pet off screen where it peeks in from the corner, and clicking it
 ## Avatars
 
 Petfolio comes with one built-in avatar, Finn, which keeps the package small. Every other avatar is downloaded by name, only when a website asks for it.
-The Avatars page on this site lists them all: the site owner copies the name of the one they like and sets it with the character option, for example Petfolio.summon({ character: 'an2' }).
+The Avatars page on this site lists them all: the site owner copies the name of the one they like and sets it with the character option, for example Petfolio.summon({ character: 'saeyoung' }).
 Anyone can add a new pixel art avatar by sending a pull request that adds a folder to the avatars folder of the GitHub repository.
 
 ## License and cost

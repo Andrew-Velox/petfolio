@@ -4,8 +4,8 @@
  * The npm package only contains one default avatar. Every other avatar lives in the
  * repo's /avatars/<name>/ folder and is fetched when a site asks for it:
  *
- *     Petfolio.summon({ character: 'an2' })
- *     → https://cdn.jsdelivr.net/gh/Andrew-Velox/petfolio@main/avatars/an2/shime1.png (…46)
+ *     Petfolio.summon({ character: 'saeyoung' })
+ *     → https://cdn.jsdelivr.net/gh/Andrew-Velox/petfolio@main/avatars/saeyoung/shime1.png (…46)
  *
  * Pure functions (no DOM), so they run under Node for tests.
  */
