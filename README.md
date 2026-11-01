@@ -1,17 +1,66 @@
-# 🐾 Petfolio
+<p align="center">
+  <img src="https://img.shields.io/badge/PETFOLIO-Premium%20Website%20Companion-101820?style=for-the-badge" alt="Petfolio ? Premium Website Companion" />
+</p>
+
+<h1 align="center">Petfolio</h1>
+<h3 align="center">A tiny animated friend for your website</h3>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 6" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS 4" />
+  <img src="https://img.shields.io/badge/React_Router-7-CA4245?style=flat-square&logo=reactrouter&logoColor=white" alt="React Router 7" />
+</p>
+
+  ![npm](https://img.shields.io/npm/v/petfolio?color=6366f1&label=npm) ![license](https://img.shields.io/npm/l/petfolio?color=10b981)
+---
+
 
 A tiny animated friend for any website. Petfolio is a Shimeji-style PixiJS companion that walks, runs,
-jumps, climbs walls and the ceiling, says cute things — and, with a free AI key, **answers your visitors'
-questions about your site**.
+jumps, climbs walls and the ceiling, says cute things, and with a free AI key answers your visitors'
+questions about your site.
 
-![npm](https://img.shields.io/npm/v/petfolio?color=6366f1&label=npm) ![license](https://img.shields.io/npm/l/petfolio?color=10b981)
-
-- **One line to add** — `Petfolio.summon()`. No config, any framework (or none), TypeScript types included.
-- **Moves like the original Shimeji** — the engine is a port of Shimeji's action/behaviour system.
-- **Never gets in the way** — the pet's canvas is click-through; your page's links, buttons, text selection
+- One line to add - `Petfolio.summon()`. No config, any framework (or none), TypeScript types included.
+- Moves like the original Shimeji - the engine is a port of Shimeji's action and behavior system.
+- Never gets in the way - the pet's canvas is click-through; your page's links, buttons, text selection,
   and scrolling keep working. Only the pet's visible pixels catch the mouse.
-- **Chats about your site** — answers only from a text file *you* write (`npx petfolio-cli about-me.txt`), via your own server
-  route so the API key never reaches the browser.
+- Chats about your site - answers only from a text file you write (`npx petfolio-cli about-me.txt`), via your
+  own server route so the API key never reaches the browser.
+
+---
+
+## Project Demo
+
+### 1. Landing Page
+
+<p align="center">
+  <img src="./Project%20Demo/Landing%20Page.png" alt="Petfolio landing page" width="1200" />
+</p>
+
+### 2. Features
+
+<p align="center">
+  <img src="./Project%20Demo/Features.png" alt="Petfolio features" width="1200" />
+</p>
+
+### 3. Avatars
+
+<p align="center">
+  <img src="./Project%20Demo/Avater.png" alt="Petfolio avatar gallery" width="1200" />
+</p>
+
+### 4. Custom Avatar
+
+<p align="center">
+  <img src="./Project%20Demo/Custom%20Avater,%20Add%20your%20own.png" alt="Custom Petfolio avatar" width="1200" />
+</p>
+
+### 5. How it works
+
+<p align="center">
+  <img src="./Project%20Demo/How%20it%20works.png" alt="How Petfolio works" width="1200" />
+</p>
 
 ---
 
@@ -26,7 +75,7 @@ npm install petfolio
 ```js
 import { Petfolio } from 'petfolio';
 
-const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, auto-pilot on
+const pet = Petfolio.summon();
 ```
 
 ### Script tag (no bundler)
@@ -34,7 +83,7 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 ```html
 <script src="https://unpkg.com/petfolio"></script>
 <script>
-  const pet = Petfolio.summon();   // `Petfolio` is a global
+  const pet = Petfolio.summon();
 </script>
 ```
 
@@ -42,9 +91,8 @@ const pet = Petfolio.summon();   // fullscreen click-through overlay + the pet, 
 
 ### React / Next.js
 
-Petfolio uses the browser (`window`, WebGL), so start it inside an effect — never during server rendering.
-Importing it inside the effect keeps it out of the server bundle and loads the ~1.9 MB (≈1 MB gzipped) library
-lazily:
+Petfolio uses the browser (`window`, WebGL), so start it inside an effect - never during server rendering.
+Importing it inside the effect keeps it out of the server bundle and loads the library lazily:
 
 ```tsx
 "use client";
@@ -54,22 +102,27 @@ export default function PetfolioMount() {
   useEffect(() => {
     let pet: { destroy(): void } | undefined;
     let cancelled = false;
+
     import("petfolio").then(({ Petfolio }) => {
-      if (!cancelled) pet = Petfolio.summon();   // `cancelled` covers React StrictMode's dev remount
+      if (!cancelled) pet = Petfolio.summon();
     });
-    return () => { cancelled = true; pet?.destroy(); };
+
+    return () => {
+      cancelled = true;
+      pet?.destroy();
+    };
   }, []);
+
   return null;
 }
 ```
 
-Render `<PetfolioMount />` once, e.g. in `app/layout.tsx`. The same pattern works in Vue (`onMounted` /
-`onUnmounted`), Svelte (`onMount`), Nuxt (`<ClientOnly>` or `onMounted`), Astro (`client:only`) and so on.
+Render `<PetfolioMount />` once, for example in `app/layout.tsx`. The same pattern works in Vue,
+Svelte, Nuxt, Astro, and similar frameworks.
 
 ### TypeScript
 
-Types ship with the package (`types/index.d.ts`) — `PetfolioOptions`, `PetfolioAiOptions` and the `Petfolio`
-class are exported.
+Types ship with the package. `PetfolioOptions`, `PetfolioAiOptions`, and the `Petfolio` class are exported.
 
 ---
 
@@ -77,197 +130,91 @@ class are exported.
 
 ```js
 Petfolio.summon({
-  character: 'saeyoung',           // avatar name — pick one on the site's Avatars page (default: 'finn')
-  scale: 0.95,                // sprite scale
-  autoStart: true,            // start auto-pilot immediately (false = manual control)
-  idleScale: 1,               // < 1 shortens Shimeji's long stand/sit periods (0.3 = livelier)
-  name: 'Mishi',              // persona name in the chat
-  ai: { endpoint: '/api/petfolio' },        // chat — see "AI chat"
-  suggestions: ['What do you do?', 'Show me your projects'],   // chat starter chips ([] = none)
-  phrases: ['Hi hi! 💕', 'Boop!'],          // your own cute lines
-  chatter: { min: 20, max: 60 },            // seconds between random speech bubbles (false = off)
-  ui: true,                   // click / right-click menu + chat (false = just the pet)
-  physics: 'page',            // 'floor' (default) | 'page' | 'corner' — see "Page physics"
-  onSettings: () => {},       // called by the menu's Settings button (does nothing by default)
+  character: 'saeyoung',
+  scale: 0.95,
+  autoStart: true,
+  idleScale: 1,
+  name: 'Mishi',
+  ai: { endpoint: '/api/petfolio' },
+  suggestions: ['What do you do?', 'Show me your projects'],
+  phrases: ['Hi hi!', 'Boop!'],
+  chatter: { min: 20, max: 60 },
+  ui: true,
+  physics: 'page',
+  onSettings: () => {},
 });
 ```
 
 | Option | Default | Meaning |
 |---|---|---|
-| `character` | `'finn'` | Avatar name from the [Avatars page](https://andrew-velox.github.io/petfolio/avatars/). `finn` is built in; any other is downloaded. See "Avatars". |
-| `avatarBase` | jsDelivr | Where avatars are downloaded from (self-host or pin a version). |
-| `scale` | `0.95` | Sprite size multiplier. |
-| `autoStart` | `true` | Begin the random-behaviour auto-pilot. |
-| `idleScale` | `1` | Multiplier for the long idle periods (1 = original Shimeji). |
-| `name` | `'Petfolio'` | Name shown in the chat and used in the AI prompt. |
-| `ai` | — | Chat connection (see below). Without it the chat asks for a key (dev only). |
-| `chat` | `true` | `false` hides the chat button (a plain pet with a menu, no AI). |
-| `suggestions` | 3 generic questions | Starter questions shown as chips. `[]` = none. |
-| `phrases` | ~30 built in | Lines for the say-hi animation and random chatter. |
-| `chatter` | `{min: 12, max: 30}` | Random speech bubbles. `false` = only the say-hi animation speaks. |
-| `ui` | `true` | The menu and chat panel. `false` = a plain pet, no UI. |
-| `physics` | `'floor'` | `'floor'`: the window edges only. `'page'`: paragraphs, headings and images become ledges (see "Page physics"). `'corner'`: the pet parks in the bottom corner and idles. |
-| `onSettings` | — | Callback for the menu's Settings button. |
+| `character` | `'finn'` | Avatar name from the Avatars page. `finn` is built in; others are downloaded. |
+| `avatarBase` | jsDelivr | Where avatars are downloaded from. |
+| `scale` | `0.95` | Sprite scale. |
+| `autoStart` | `true` | Begin auto-pilot immediately. |
+| `idleScale` | `1` | Multiplier for longer idle periods. |
+| `name` | `'Petfolio'` | Name used in chat and AI prompt. |
+| `ai` | - | Chat connection. Without it, the chat asks for a key in dev mode. |
+| `suggestions` | 3 generic questions | Starter questions shown in chips. |
+| `phrases` | built-in defaults | Lines used during say-hi and random chatter. |
+| `chatter` | `{min: 12, max: 30}` | Random speech bubble timing. `false` disables it. |
+| `ui` | `true` | Shows menu and chat UI. `false` makes it a plain pet. |
+| `physics` | `'floor'` | `'floor'`, `'page'`, or `'corner'` behavior. |
+| `onSettings` | - | Callback for the settings button. |
 
 ---
 
 ## Interaction
 
-- **Click or right-click** the pet to open the menu: **chat** · **settings** · **exit**.
-  (A tap works on touch screens, which have no right-click.)
-- **Drag** it by the head — it dangles, struggles if held too long, and is **thrown** with your mouse speed.
-- **Exit** sends the pet off screen; it peeks in from the corner. **Click the peeking pet** to bring it back.
-- While the **chat** is open the pet stands still on its say-hi frame and the chat box takes the place of its
-  speech bubble. From a wall or the ceiling it drops to the floor first; from the corner it walks back in.
-  Close with × or `Esc`.
-
-The overlay never blocks your page: the canvas covers the viewport but is `pointer-events: none` except
-while the pointer is over the pet's visible pixels.
-
-## Avatars
-
-The package contains **one avatar, `finn`**, which keeps it small (~0.8 MB). Every other avatar is downloaded
-by name when the pet starts, so you only ever load the one you chose.
-
-1. Open the **[Avatars page](https://andrew-velox.github.io/petfolio/avatars/)** and copy the name of the one you like.
-2. Use it: `Petfolio.summon({ character: 'saeyoung' })`.
-
-```js
-Petfolio.summon({ character: 'saeyoung' });                       // from the Avatars page
-Petfolio.summon({ character: 'saeyoung', avatarBase: '/my-avatars/' });   // your own copy of the folders
-```
-
-- **Where they come from.** The sprites live in this repo's [`avatars/`](avatars) folder and are served by
-  jsDelivr (`https://cdn.jsdelivr.net/gh/Andrew-Velox/petfolio@main/avatars/<name>/shime1.png` …). That is the
-  default `avatarBase`. To pin a version use `…/petfolio@<tag>/avatars/`; to self-host, copy the folder you want
-  and point `avatarBase` at its parent.
-- **If the download fails** (wrong name, offline, blocked) the pet falls back to `finn` and logs a console
-  warning with the URL. New avatars can take up to ~12 hours to appear on jsDelivr after they are merged.
-- **Content-Security-Policy:** allow `img-src https://cdn.jsdelivr.net` (or your `avatarBase` origin).
-- **Switching at runtime:** `await pet.setCharacter('name')` → `true` once it is in use, `false` for an invalid name or
-  a failed download. The pet keeps its current look until the new one has downloaded.
-- **Add yours:** put a folder `avatars/<name>/` in a pull request, with `avatar.json`
-  (`{ "name", "displayName", "author" }`) and `shime1.png … shime46.png` (64–320 px wide and tall, ≤ 40 KB each; the
-  numbers are Shimeji's frame numbers). Check it with `node scripts/check-avatars.mjs`. The name is what people type, so use
-  lowercase letters, digits and dashes.
-
-## Page physics
-
-By default the pet lives on the edges of the window: the floor, the two walls and the ceiling. With
-`physics: 'page'` it also uses your page: the **top edge of paragraphs, headings, images, figures, quotes,
-code blocks, tables, lists, buttons and `<header>` / `<nav>` / `<footer>` / `<aside>`** becomes a ledge. The pet
-jumps up to ledges, walks along them, sits on the edge with its legs dangling, steps off, and rides along when
-the page scrolls. Nothing on your page is moved or changed.
-
-```js
-Petfolio.summon({ physics: 'page' });
-```
-
-How it stays out of trouble:
-
-- **A simplified, invisible map.** The page is measured only on load, on resize, when the layout changes and
-  after a long scroll — never per frame. Ledges are one-way: the pet lands on them from above and falls or jumps
-  through them from below, so it can never get stuck inside your content.
-- **Only stable elements count.** Left out: hidden or transparent elements, anything covered (a modal, a cookie
-  banner), anything inside a scroll container or a transformed block (carousels, sliders), `position: sticky`
-  elements, anything animating, anything that moved between two measurements, and floating `position: fixed`
-  things like toasts. A fixed `<header>` / `<nav>` stays a ledge and does not move when the page scrolls.
-- **Scrolling.** A pet standing on a paragraph scrolls with it. When the paragraph leaves the screen (or gets too
-  close to the top, where the pet's head would be cut off) the pet is left behind and falls to the next ledge or
-  the floor.
-- **It falls back to `'floor'` by itself** — the classic behaviour, which works everywhere — when:
-  the viewport is narrower than 600 px, the device is touch-only, the visitor prefers reduced motion, the page has
-  fewer than 3 usable surfaces, or the layout will not settle (map changes five times in 12 seconds, or the pet keeps
-  losing its footing). After an unstable layout `'floor'` stays for 30 seconds, then `'page'` gets another chance.
-  `pet.physicsMode` and `pet.physicsFallbackReason` tell you what is running and why.
-- **The chat and Exit** need the real floor: from a ledge the pet walks to the edge and steps off first.
-- **`physics: 'corner'`** is a quiet mode for pages where a roaming pet would be in the way: it walks to the
-  bottom-right corner and idles there (sitting, looking at the mouse, the occasional emote). Dragging and the chat work as usual.
-
-Per-element control, with plain HTML attributes:
-
-```html
-<p data-petfolio-platform>Always a ledge, even if it is small or would be filtered out.</p>
-<div data-petfolio-ignore>This element and everything inside it is never a ledge.</div>
-```
-
-Limits to know: a `<header>` at the very top of the page has no visible top edge to stand on (the pet's head
-would be cut off), so ledges must be at least 100 px below the top of the window; only the first
-4,000 elements near the viewport are looked at; text inside iframes is not part of the map.
-
-## API
-
-```js
-const pet = Petfolio.summon();
-
-pet.startAuto();            // random behaviour (Shimeji's weighted auto-pilot)
-pet.stopAuto();             // stop and idle
-pet.toggleAuto();           // → boolean, whether auto-pilot is now on
-pet.isAuto;                 // boolean
-
-pet.changeState('sit');     // play a behaviour now (see names below)
-pet.triggerState('say_hi'); // …then auto-pilot resumes after ~3 s
-pet.chaseMouse();           // follow the pointer
-pet.exitToPeek();           // walk off screen and peek in (click it / startAuto() to return)
-
-await pet.setCharacter('saeyoung');    // downloads the avatar first; resolves true once it is in use
-Petfolio.availableCharacters();   // ['finn'] — the avatars built into the package
-
-pet.startChat();            // what the menu's chat button does
-pet.endChat();
-
-pet.setPhysics('page');     // 'floor' | 'page' | 'corner' — change the movement mode at runtime
-pet.physicsMode;            // what is actually in use ('page' may be 'floor' — see below)
-pet.physicsFallbackReason;  // why 'page' is not in use: 'narrow-viewport' | 'touch-only' | 'reduced-motion'
-                            // | 'few-platforms' | 'unstable' (null when it is)
-
-pet.destroy();              // remove the pet, its canvas and its menu
-```
-
-### Behaviour names
-
-`changeState()` accepts the short names `idle`, `sit`, `say_hi`, `tv_clone`, `remove_cap`, `summon`
-(fall-from-the-sky entrance), `walk-off-left`, `walk-off-right` — or **any Shimeji behaviour name**:
-`StandUp`, `SitDown`, `LieDown`, `WalkAlongWorkAreaFloor`, `RunAlongWorkAreaFloor`,
-`CrawlAlongWorkAreaFloor`, `ClimbAlongWall`, `ClimbHalfwayAlongWall`, `ClimbAlongCeiling`,
-`JumpFromLeftWall`, `JumpFromRightWall`, `GrabWorkAreaBottomLeftWall`, `ChaseMouse`, `SayHi`, `TvClone`,
-`RemoveCap`, … (an unknown name logs a warning and idles). The full list is in
-`packages/petfolio/src/engine/shime-config.js`.
-
-### Cute messages
-
-The say-hi animation shows a random short message, and the pet also says something cute by itself every
-12–30 seconds, whatever it is doing. The bubble stays up ~3.5 s and rides along with the pet; it stays quiet
-while the pet is held, while the chat is open and while it is off screen. Use `phrases` and `chatter` (above)
-to change the lines and the timing.
+- Click or right-click the pet to open the menu: chat, settings, exit.
+- Drag it by the head - it dangles, struggles if held too long, and is thrown with your mouse speed.
+- Exit sends the pet off-screen; it peeks in from the corner. Click the peeking pet to bring it back.
+- While the chat is open, the pet stands still and the chat panel takes the place of its speech bubble.
+- The overlay never blocks your page: the canvas covers the viewport but remains pointer-events safe.
 
 ---
 
-## AI chat
+## Avatars
 
-Visitors open the chat from the menu and ask about you or your site. The pet answers **only from a text file you
-write** and says "I don't know" otherwise. There is no database, no embeddings and nothing to host: the text is
-read once, kept in the browser's memory, and sent along with every question ("context stuffing").
+The package contains one built-in avatar, `finn`, which keeps it small. Every other avatar is downloaded by
+name when the pet starts.
 
+1. Open the [Avatars page](https://andrew-velox.github.io/petfolio/avatars/) and copy the name of the one you like.
+2. Use it: `Petfolio.summon({ character: 'saeyoung' })`.
+
+```js
+Petfolio.summon({ character: 'saeyoung' });
+Petfolio.summon({ character: 'saeyoung', avatarBase: '/my-avatars/' });
 ```
- about-me.txt ──npx petfolio-cli──▶ public/petfolio-knowledge.json
-                                        │  fetched once when the page loads
- visitor's question + the whole text ───┴──▶ your server route ──adds the secret key──▶ Groq / Gemini
-        ▲                                     (/api/petfolio)                                │
-        └──────────────────────────────────────── answer ◀───────────────────────────────────┘
-```
 
-### Step 1 — write one text file
+- The sprites live in the repo's `avatars/` folder and are served by jsDelivr by default.
+- If the download fails, the pet falls back to `finn` and logs a warning.
+- To switch at runtime: `await pet.setCharacter('name')`.
 
-Anywhere in your project — `about-me.txt`, `content/about.md`, whatever you like. Plain text or Markdown:
+---
+
+## Page physics
+
+By default the pet lives on the edges of the window. With `physics: 'page'` it also uses your page: the top
+edge of paragraphs, headings, images, quotes, code blocks, tables, lists, buttons, headers, navs and footers
+becomes a ledge. The pet jumps, walks, sits, steps off, and rides the page as it scrolls.
+
+---
+
+## AI chat and knowledge
+
+Petfolio can answer questions from a knowledge file you control. The browser never needs your API key.
+
+### Step 1 - write one text file
+
+Create a plain text or Markdown file such as `about-me.txt`:
 
 ```md
 # About me
 I'm Alex, a full-stack developer in Lisbon. I build web apps with TypeScript and Rust.
 
 ## Projects
-- Petfolio — a Shimeji-style pet for websites.
-- Mocap RS — a motion-capture tool written in Rust.
+- Petfolio - a Shimeji-style pet for websites.
+- Mocap RS - a motion-capture tool written in Rust.
 
 ## Contact
 Email alex@example.com. I usually reply within two days.
@@ -276,265 +223,89 @@ Email alex@example.com. I usually reply within two days.
 Cheerful and a little shy. Speak in the first person and add a tiny emoji now and then.
 ```
 
-- **Facts:** background, resume, projects, FAQ, how to contact you — whatever visitors ask about. Write full
-  sentences; the model reads it like a person would.
-- **Use headings.** Each heading becomes a titled section, and the AI uses the titles to find the right topic
-  (`Contact` for "how do I reach you?"). Nested headings become `Projects > Petfolio`. Text before the first
-  heading is the `About` section. Name headings after what visitors ask about.
-- **Say it once, plainly.** Put names, dates, prices and links in the text exactly as they should be quoted.
-  The pet is told to copy them verbatim and to say "I don't know" rather than guess.
-- **Private notes:** `<!-- anything in an HTML comment -->` is dropped and never reaches the output.
-- **Personality (optional):** put the pet's voice under a heading named `Personality` (or `Persona`), at any
-  heading level. It runs until the next heading of the same or a higher level. It shapes the *tone*; it can't
-  override the rule "answer only from the facts".
-- **Keep it short.** All of it is sent with every question. Aim for under ~8,000 characters (about 2,000
-  tokens); the CLI refuses more than 20,000. Free AI tiers limit tokens per minute, so shorter text means
-  more questions per minute.
-- **It is public.** The knowledge file is served from your site, so anyone can read it. Write only what you
-  are happy to publish — never passwords or keys (the CLI warns if the text looks like a key).
+- Write facts, project history, and contact details in plain sentences.
+- Use headings. They become sections the AI can reference.
+- Put names, dates, prices, and links exactly as they should be quoted.
+- Put private notes inside HTML comments; they are dropped.
+- Keep it short, ideally under 8,000 characters.
 
-### Step 2 — turn it into the knowledge file
+### Step 2 - turn it into the knowledge file
 
 ```bash
 npm install -D petfolio-cli
-npx petfolio-cli about-me.txt                    # → public/petfolio-knowledge.json
-npx petfolio-cli about-me.txt --out static       # elsewhere (SvelteKit: static, Angular: src/assets, …)
+npx petfolio-cli about-me.txt
 ```
 
-```
-petfolio-cli: about-me.txt -> public/petfolio-knowledge.json
-  facts        1,204 characters (about 301 tokens per question)
-  sections     4: About me | Projects | Contact | …
-  personality  96 characters
-```
+This generates a JSON file such as `public/petfolio-knowledge.json`.
 
-The result is a small, readable JSON file — one titled section per heading, with Markdown clutter (`**bold**`,
-backticks, `[links](…)` → `links (…)`, images, rules) cleaned out so the model reads plain sentences. Same
-input gives the same bytes, so it diffs cleanly in git:
+### Step 3 - add a server route that holds the key
 
-```json
-{
-  "version": 2,
-  "sections": [
-    { "title": "About me", "text": "I'm Alex, a full-stack developer in Lisbon. …" },
-    { "title": "Projects", "text": "- Petfolio — a Shimeji-style pet for websites.\n- Mocap RS — …" },
-    { "title": "Contact", "text": "Email alex@example.com. I usually reply within two days." }
-  ],
-  "personality": "Cheerful and a little shy. …"
-}
-```
-
-Check the `sections` line the CLI prints: if a section you expected is missing or merged into another, fix
-your headings. The widget sends the pet's rules, the list of topics, the personality and all sections with each
-question.
-
-Run it again whenever you edit the text. To do that automatically on every build (so deployments on Vercel,
-Netlify, GitHub Actions … stay current), or just commit the generated file:
-
-```json
-{ "scripts": { "kb": "petfolio-cli about-me.txt", "prebuild": "npm run kb", "predev": "npm run kb" } }
-```
-
-The CLI has no dependencies and never touches your other files. It exits with an error (and writes nothing) for
-a missing, empty, binary (`.pdf`, `.docx` …) or too-long file.
-
-### Step 3 — add a server route that holds the key
-
-**Never put an API key in browser code** — anyone can read it. Get a free key (Groq: <https://console.groq.com/keys>,
-Gemini: <https://aistudio.google.com/apikey>), put it in a git-ignored `.env`:
+Never put an API key in browser code. Keep it in a git-ignored `.env` file:
 
 ```bash
-PETFOLIO_GROQ_API_KEY=gsk_your_key_here        # or PETFOLIO_GEMINI_API_KEY=…
+PETFOLIO_GROQ_API_KEY=gsk_your_key_here
 ```
 
-and add a small route that adds it to the request and forwards it. Make the route choose the model and limits,
-so it can't be used as a free general-purpose LLM proxy.
-
-**Next.js (App Router)** — `app/api/petfolio/route.ts` (a complete version with validation, a same-origin
-check, size limits and rate limiting lives in [`site/app/api/petfolio/route.ts`](site/app/api/petfolio/route.ts)):
+Then add a small route that forwards requests from your site:
 
 ```ts
 export async function POST(req: Request) {
   const { messages } = await req.json().catch(() => ({}));
   const ok = Array.isArray(messages) && messages.length > 0 && messages.length <= 12 &&
     messages.every((m) => ["system", "user", "assistant"].includes(m?.role) && typeof m?.content === "string" && m.content.length <= 26_000);
+
   if (!ok) return Response.json({ error: "bad request" }, { status: 400 });
 
   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.PETFOLIO_GROQ_API_KEY}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.PETFOLIO_GROQ_API_KEY}`,
+    },
     body: JSON.stringify({ model: "qwen/qwen3.8-27b", messages, temperature: 0.3, max_tokens: 350 }),
   });
+
   return Response.json(await r.json(), { status: r.ok ? 200 : 502 });
 }
 ```
 
-**Express / any Node server**
-
-```js
-app.post('/api/petfolio', express.json({ limit: '150kb' }), async (req, res) => {
-  const { messages } = req.body ?? {};
-  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 12) return res.status(400).end();
-  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.PETFOLIO_GROQ_API_KEY}` },
-    body: JSON.stringify({ model: 'qwen/qwen3.8-27b', messages, temperature: 0.3, max_tokens: 350 }),
-  });
-  res.status(r.ok ? 200 : 502).json(await r.json());
-});
-```
-
-**Gemini?** Use `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, model
-`gemini-2.0-flash`, and `PETFOLIO_GEMINI_API_KEY`. The browser sends a default model name, but your route
-decides the model — it is the one place to change it.
-
-**Models get retired.** Providers rename and remove free models from time to time (`llama-3.1-8b-instant` on Groq
-is gone). When chat suddenly fails with a 502, the route's server log says `model_not_found` — pick a current
-model from <https://console.groq.com/docs/models>. The `site/` route reads it from an environment variable, so
-it is a settings change, not a code change: `PETFOLIO_MODEL=openai/gpt-oss-20b`.
-
-The route must answer with the provider's normal JSON (`{ "choices": [{ "message": { "content": "…" } }] }`).
-
-Because the browser sends the text, the route can't check that it is *your* text — so treat it as a small public
-service and keep it cheap to abuse: fix the model and `max_tokens` in the route, cap the message sizes (the
-`site/` route allows one system message up to 26,000 characters and visitor/assistant messages up to 2,000), check
-the `Origin`, and rate-limit per IP (the example limits in memory — use a shared store such as Redis/Upstash on
-serverless platforms).
-
-### Step 4 — point the widget at it
+### Step 4 - point the widget at it
 
 ```js
 Petfolio.summon({
   name: 'Mishi',
   ai: {
-    endpoint: '/api/petfolio',                  // your route (key stays on the server)
-    knowledge: '/petfolio-knowledge.json',      // default; change it if you used --out
+    endpoint: '/api/petfolio',
+    knowledge: '/petfolio-knowledge.json',
   },
 });
 ```
 
-| `ai` option | Meaning |
+| ai option | Meaning |
 |---|---|
-| `endpoint` | Your server route. **Recommended.** |
-| `knowledge` | URL of the file the CLI wrote (default `/petfolio-knowledge.json`), or the data itself: `{ sections, personality }`, `{ content, personality }` or a plain string. |
-| `apiKey` | Direct mode — **local testing only**: the key is visible to anyone using the page. |
-| `provider` / `model` | `'groq'` (default) or `'gemini'`; override the model name (direct mode). |
-
-**Quick local test without a route:** omit `endpoint`, open the chat and paste a key (or pass `ai: { apiKey }`).
-It is kept in that browser's `localStorage`. Never ship this.
-
-### Upgrading from 1.x
-
-1. `npm i petfolio@2` and `npm i -D petfolio-cli@2`.
-2. Write your text file (Step 1) and run `npx petfolio-cli about-me.txt`. Delete the old
-   `public/petfolio-knowledgeBase.json`, and change any `petfolio-cli --scan-only` script to
-   `petfolio-cli about-me.txt`.
-3. The CLI no longer asks for or saves your API key — keep it in `.env` yourself (Step 3).
-4. **Update your server route's size limits.** The browser now sends the whole text, up to about 25,000
-   characters per request. A route that rejects bodies over a few KB (for example `express.json({ limit: '50kb' })`
-   or a 12,000-character cap) will answer 400 — use the limits from Step 3 / `site/app/api/petfolio/route.ts`.
-
-### Troubleshooting the chat
-
-| Symptom | Likely cause |
-|---|---|
-| "The AI service returned an error (502)" | Your route got a rejected key or a provider error — **look at the terminal running the server**: the route logs the provider's real reason (`[petfolio] <model> -> HTTP 404: model_not_found` = retired model, set `PETFOLIO_MODEL`; HTTP 401 = bad key). Also check that `.env` has a valid `PETFOLIO_GROQ_API_KEY`, and restart the server after editing it. |
-| "Too many questions right now" | The provider's or your route's rate limit (429). If it happens after only a few questions, your text is long: it is re-sent with every question and uses up the free tier's tokens per minute — shorten it. |
-| "I don't know" for things you wrote | The file isn't being found (check the browser's Network tab for `/petfolio-knowledge.json`; the console says `[petfolio] Could not load the knowledge file …`), it is stale (re-run `npx petfolio-cli about-me.txt`), or the answer isn't written in it in plain sentences. |
-| Chat asks for an API key | `ai.endpoint` isn't set (the widget is in direct mode). |
-| Answers ignore new content | Re-run the CLI and redeploy — the browser re-checks the file on every page load, so a hard refresh isn't needed. |
-| 400 from your route | The text exceeds your route's size limits (26,000 characters for the first message in `site/`). |
+| `endpoint` | Your server route. Recommended. |
+| `knowledge` | URL of the generated knowledge file or inline data. |
+| `apiKey` | Direct mode for local testing only. |
 
 ---
 
-## Good to know
+## Why developers use it
 
-- **Size:** ~0.85 MB (≈250 KB gzipped): PixiJS plus the default avatar, inlined — nothing else to host. Other avatars
-  are downloaded (about 0.2–0.8 MB each). Load the widget lazily (see the React example) so it doesn't block your page.
-- **Content-Security-Policy:** works with a strict CSP — no `unsafe-eval` and no `unsafe-inline` styles
-  needed. You do need `img-src data:` (the default avatar is made of data URLs), `img-src https://cdn.jsdelivr.net` if you use
-  another avatar, and, for the chat, a `connect-src` that includes
-  your route (`'self'` covers a same-origin route).
-- **Touch:** tap the pet for the menu. Dragging by touch is best-effort (the browser may scroll instead);
-  mouse and pen are the primary targets.
-- **Multiple instances:** `summon()` reuses the `#petfolio-canvas` element. Call `pet.destroy()` before
-  summoning again.
-- **Page physics:** `physics: 'page'` is opt-in; the default keeps the classic window-edge behaviour.
-- **Page scrollbars:** the pet's right wall is the visible edge of the page, not the edge behind the scrollbar.
+- It is tiny, lightweight, and easy to drop into an existing site.
+- It respects your layout and never blocks clicks or scrolling.
+- It is fully type-safe in TypeScript.
+- It is easy to self-host and easy to keep private.
 
 ---
-
-## Animation engine (Shimeji port)
-
-Movement is driven by `packages/petfolio/src/engine/`, a port of the original Shimeji engine: 25 ticks/second,
-`Pose` (sprite + per-tick velocity + duration) → `Animation` → `Action` (Stay / Move / Jump / Fall / Dragged /
-Sequence / Select) → `Behavior`. Auto-pilot is Shimeji's own weighted-random "next behaviour" picker with
-floor/wall/ceiling conditions; the numbers live in `engine/shime-config.js` (a port of `actions.xml` +
-`behaviors.xml`). The engine has no Pixi/DOM dependency, so it is tested headlessly.
-
-## Development
-
-```bash
-cd packages/petfolio
-npm run dev              # sandbox with hot reload
-npm run build:lib        # dist/petfolio.mjs + .cjs + .global.js
-npm run inline-sprites   # regenerate the inlined default avatar (run after changing avatars/<bundled one>)
-node ../../scripts/check-avatars.mjs   # validate the folders in avatars/
-node --test test/        # engine + AI tests (headless)
-cd ../petfolio-cli && npm test   # text file -> knowledge JSON, incl. the real binary
-```
-
-The sandbox chat reads `public/petfolio-knowledge.json` (git-ignored): make one with
-`npx petfolio-cli ../../site/content/about.txt` from `packages/petfolio`.
-
-Adding an avatar: see "Avatars" above — a folder in `avatars/` is all it takes; it shows up on the site's Avatars
-page automatically. Only the avatar marked `"bundled": true` in its `avatar.json` is inlined into the package.
-
-Publishing (both packages): bump the versions, `npm login`, then `npm publish` in `packages/petfolio` and
-`packages/petfolio-cli` (`prepublishOnly` rebuilds and copies this README + the LICENSE into the package).
-
-## Deploying the demo site (`site/`)
-
-The landing page in [`site/`](site) deploys to **GitHub Pages** with the workflow in
-[`.github/workflows/pages.yml`](.github/workflows/pages.yml):
-
-1. Publish `petfolio` and `petfolio-cli` to npm first (the site installs them from npm).
-2. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Push to `main` (or run the workflow manually). The site goes live at `https://<user>.github.io/<repo>/`.
-
-Pages only serves static files, so the build is a static export and the `/api/petfolio` route is **left out**.
-Without a chat server the pet still works, just without the chat button. A secret key can't live in a static
-page, so the chat needs a small server somewhere. Pick one, then add the GitHub Actions **variable**
-`PETFOLIO_ENDPOINT` (Settings → Secrets and variables → Actions → *Variables*) with its address and re-run the
-Pages workflow:
-
-- **Vercel (or any Node host)** — deploy `site/` (Root Directory `site`) with `PETFOLIO_GROQ_API_KEY` and
-  `PETFOLIO_ALLOWED_ORIGINS=https://<user>.github.io` (origin only: no path, no trailing slash).
-  `PETFOLIO_ENDPOINT` = `https://<project>.vercel.app/api/petfolio`.
-
-Custom domain, or a `<user>.github.io` repo (site at the root)? Add the Actions variable `BASE_PATH` = `/`.
-
-## Project structure
-
-```
-packages/
-├── petfolio/            ← the library (npm: petfolio)
-│   ├── src/
-│   │   ├── index.js         NPM entry (Petfolio.summon()); global.js = <script> entry
-│   │   ├── Petfolio.js      Pixi renderer + public API (25 fps fixed-step loop)
-│   │   ├── interaction.js   pointer → engine (click-through canvas, drag / throw / tap)
-│   │   ├── bubble.js, phrases.js, constants.js, textures.js
-│   │   ├── ai/              knowledge loader + chat client (no DOM)
-│   │   ├── ui/              icon menu, chat panel
-│   │   ├── characters/      the bundled default avatar + remote avatar loading
-│   │   └── engine/          Shimeji engine port (no Pixi/DOM)
-│   ├── types/index.d.ts
-│   └── test/
-└── petfolio-cli/        ← about-me.txt → public/petfolio-knowledge.json (npm: petfolio-cli)
-avatars/                 ← avatar sprites (shime1–46.png + avatar.json), served by jsDelivr and listed on the site
-site/                    ← the Petfolio website (Next.js) — also a working example of everything above
-```
 
 ## License
 
-MIT
+Petfolio is released under the MIT license. See [LICENSE](LICENSE) for details.
+
+---
+
+## Repository
+
+- GitHub: [petfolio](https://github.com/Andrew-Velox/petfolio)
+- Docs: [site](./site)
+- Avatars: [avatars](./avatars)
